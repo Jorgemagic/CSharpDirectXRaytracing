@@ -1,5 +1,5 @@
 # CSharp DirectX Raytracing Tutorials
-This repositoriy contain tutorials demostrating how to use DirectX12 Raytracing with CSharp. The Nvidia original C++ tutorials can be checkout from [here](https://github.com/NVIDIAGameWorks/DxrTutorials). The DirectX12 CSharp binding used was [Vortice](https://github.com/amerkoleci/Vortice.Windows).
+This repository contain tutorials demostrating how to use DirectX12 Raytracing with CSharp. The Nvidia original C++ tutorials can be found [here](https://github.com/NVIDIAGameWorks/DxrTutorials). The DirectX12 CSharp binding used was [Vortice](https://github.com/amerkoleci/Vortice.Windows).
 
 ## Requirements:
 
