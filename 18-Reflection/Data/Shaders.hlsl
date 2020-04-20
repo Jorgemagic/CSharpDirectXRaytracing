@@ -88,27 +88,59 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	float3 hitNormal = (PrimitiveIndex() < 2) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
 	float color;
+	if (payload.recursionDepth < MaxRecursionDepth)
+	{
+		// Shadow
+		RayDesc shadowRay;
+		shadowRay.Origin = hitPosition; // (PrimitiveIndex() < 2) ? hitPosition : hitPosition + hitNormal * 0.01f;
+		shadowRay.Direction = normalize(lightPosition - shadowRay.Origin);
+		shadowRay.TMin = 0.01;
+		shadowRay.TMax = 100000;
+		ShadowPayload shadowPayload;
+		TraceRay(gRtScene,
+			0  /*rayFlags*/,
+			0xFF,
+			1 /* ray index*/,
+			0 /* Multiplies */,
+			1 /* Miss index (shadow) */,
+			shadowRay,
+			shadowPayload);
 
-	// Shadow
-	RayDesc shadowRay;
-	shadowRay.Origin = hitPosition; // (PrimitiveIndex() < 2) ? hitPosition : hitPosition + hitNormal * 0.01f;
-	shadowRay.Direction = normalize(lightPosition - shadowRay.Origin);
-	shadowRay.TMin = 0.01;
-	shadowRay.TMax = 100000;
-	ShadowPayload shadowPayload;
-	TraceRay(gRtScene,
-		0  /*rayFlags*/,
-		0xFF,
-		1 /* ray index*/,
-		0 /* Multiplies */,
-		1 /* Miss index (shadow) */,
-		shadowRay,
-		shadowPayload);	
+		// Reflection    
+		RayDesc reflectionRay;
+		reflectionRay.Origin = hitPosition;
+		reflectionRay.Direction = reflect(WorldRayDirection(), hitNormal);
+		reflectionRay.TMin = 0.01;
+		reflectionRay.TMax = 100000;
+		RayPayload reflectionPayload;
+		reflectionPayload.recursionDepth = payload.recursionDepth + 1;
+		TraceRay(gRtScene,
+			0  /*rayFlags*/,
+			0xFF,
+			0 /* ray index*/,
+			0 /* Multiplies */,
+			0 /* Miss index (raytrace) */,
+			reflectionRay,
+			reflectionPayload);
+		float4 reflectionColor = reflectionPayload.color;
 
-	// Calculate final color.
-	float4 phongColor = CalculatePhongLighting(primitiveAlbedo, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, primitiveAlbedo);
+		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
-	payload.color = phongColor;
+		// Calculate final color.
+		float4 phongColor = CalculatePhongLighting(primitiveAlbedo, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+		color = phongColor + reflectedColor;
+	}
+	else
+	{
+		color = CalculatePhongLighting(primitiveAlbedo, hitNormal, false, 0.9, 0.7, 50);
+	}
+
+	// Apply visibility falloff.
+	float t = RayTCurrent();
+	color = lerp(color, backgroundColor, 1.0 - exp(-0.000002 * t * t * t));
+
+	payload.color = color;
 }
 
 [shader("miss")]

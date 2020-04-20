@@ -1,6 +1,6 @@
-﻿using RayTracingTutorial16.RTX;
-using RayTracingTutorial16.RTX.Structs;
-using RayTracingTutorial16.Structs;
+﻿using RayTracingTutorial19.RTX;
+using RayTracingTutorial19.RTX.Structs;
+using RayTracingTutorial19.Structs;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,7 +10,7 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial16
+namespace RayTracingTutorial19
 {
     public class Scene
     {
@@ -32,7 +32,6 @@ namespace RayTracingTutorial16
         private EventWaitHandle mFenceEvent;
         private Rect mSwapChainRect;
         private ID3D12Resource mpTopLevelAS;
-        private ID3D12Resource mpBottomLevelAS;
         private ID3D12StateObject mpPipelineState;
         private ID3D12RootSignature mpEmptyRootSig;
         private AccelerationStructures acs;
@@ -41,7 +40,6 @@ namespace RayTracingTutorial16
         private ID3D12Resource mpShaderTable;
         private uint mShaderTableEntrySize;
 
-        private AccelerationStructureBuffers mTopLevelBuffers;
         private long mTlasSize = 0;
         private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
@@ -111,10 +109,12 @@ namespace RayTracingTutorial16
         public void CreateAccelerationStructures()
         {
             acs = new AccelerationStructures();
-            mTopLevelBuffers = new AccelerationStructureBuffers();
 
-            AccelerationStructureBuffers bottomLevelBuffers = acs.CreateBottomLevelAS(mpDevice, mpCmdList);
-            AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers.pResult, ref mTlasSize);
+            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[2];
+            bottomLevelBuffers[0] = acs.CreatePlaneBottomLevelAS(mpDevice, mpCmdList);
+            bottomLevelBuffers[1] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
+
+            AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers, ref mTlasSize);
 
             // The tutorial doesn't have any resource lifetime management, so we flush and sync here. This is not required by the DXR spec - you can submit the list whenever you like as long as you take care of the resources lifetime.
             mFenceValue = context.SubmitCommandList(mpCmdList, mpCmdQueue, mpFence, mFenceValue);
@@ -125,7 +125,6 @@ namespace RayTracingTutorial16
 
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             mpTopLevelAS = topLevelBuffers.pResult;
-            mpBottomLevelAS = bottomLevelBuffers.pResult;
         }
 
         public void CreateRtPipelineState()
@@ -173,20 +172,20 @@ namespace RayTracingTutorial16
             subobjects[index] = missRootSignature.subobject; // 6 Miss Root Sig
 
             int missRootIndex = index++;  // 6
-            ExportAssociation missRootAssociation = new ExportAssociation(new string[] { RTPipeline.kMissShader }, subobjects[missRootIndex]);
+            ExportAssociation missRootAssociation = new ExportAssociation(new string[] { RTPipeline.kMissShader, RTPipeline.kShadowMiss }, subobjects[missRootIndex]);
             subobjects[index++] = missRootAssociation.subobject; // 7 Associate Miss Root Sig to Miss Shader
 
             // Bind the payload size to the programs
-            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * 4);
+            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * (4 + 1)); //MaxPayloadSize float4 + uint
             subobjects[index] = shaderConfig.subObject; // 8 Shader Config;
 
             int shaderConfigIndex = index++; // 8
-            string[] shaderExports = new string[] { RTPipeline.kMissShader, RTPipeline.kClosestHitShader, RTPipeline.kRayGenShader };
+            string[] shaderExports = new string[] { RTPipeline.kMissShader, RTPipeline.kClosestHitShader, RTPipeline.kRayGenShader, RTPipeline.kShadowMiss };
             ExportAssociation configAssociation = new ExportAssociation(shaderExports, subobjects[shaderConfigIndex]);
             subobjects[index++] = configAssociation.subobject;  // 9 Associate Shader Config to Miss, CHS, RGS
 
             // Create the pipeline config
-            PipelineConfig config = new PipelineConfig(1);
+            PipelineConfig config = new PipelineConfig(4+1);
             subobjects[index++] = config.suboject; // 10
 
             // Create the global root signature and store the empty signature
@@ -223,7 +222,7 @@ namespace RayTracingTutorial16
             mShaderTableEntrySize = D3D12ShaderIdentifierSizeInBytes;
             mShaderTableEntrySize += 8; // the ray-gen's descriptor table
             mShaderTableEntrySize = align_to(D3D12RaytracingShaderRecordByteAlignment, mShaderTableEntrySize);
-            uint shaderTableSize = mShaderTableEntrySize * 3;
+            uint shaderTableSize = mShaderTableEntrySize * 4;
 
             // For simplicity, we create the shader.table on the upload heap. You can also create it on the default heap
             mpShaderTable = this.acs.CreateBuffer(mpDevice, shaderTableSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -246,7 +245,11 @@ namespace RayTracingTutorial16
             pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kMissShader), D3D12ShaderIdentifierSizeInBytes);
 
-            // Entry 2 - hit program
+            // Entry 2 - miss program
+            pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
+            Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kShadowMiss), D3D12ShaderIdentifierSizeInBytes);
+
+            // Entry 3 - hit program
             pData += (int)mShaderTableEntrySize; // +1 skips miss entries
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kHitGroup), D3D12ShaderIdentifierSizeInBytes);
             heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
@@ -302,7 +305,7 @@ namespace RayTracingTutorial16
                     StructureByteStride = 0,
                 }
             };
-            
+
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             indexSRVHandle = srvHandle;
             mpDevice.CreateShaderResourceView(this.acs.IndexBuffer, indexSRVDesc, indexSRVHandle);
@@ -353,10 +356,10 @@ namespace RayTracingTutorial16
             uint missOffset = 1 * mShaderTableEntrySize;
             raytraceDesc.MissShaderTable.StartAddress = mpShaderTable.GPUVirtualAddress + missOffset;
             raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize; // Only a s single miss-entry 
+            raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 2; // Only a s single miss-entry 
 
             // Hit is the third entry in the shader-table
-            uint hitOffset = 2 * mShaderTableEntrySize;
+            uint hitOffset = 3 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;

@@ -37,6 +37,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "16-Lighting", "16-Lighting\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "17-Shadow", "17-Shadow\17-Shadow.csproj", "{0C8CBC0C-21F7-426A-A9C9-A8CD9FC8D81D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "18-Reflection", "18-Reflection\18-Reflection.csproj", "{0DFCA952-5383-4747-B49B-B1DCAF446C55}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "20-Scene", "20-Scene\20-Scene.csproj", "{5C2F44B3-20DE-4C99-A097-86550D20BB65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +115,14 @@ Global
 		{0C8CBC0C-21F7-426A-A9C9-A8CD9FC8D81D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C8CBC0C-21F7-426A-A9C9-A8CD9FC8D81D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C8CBC0C-21F7-426A-A9C9-A8CD9FC8D81D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DFCA952-5383-4747-B49B-B1DCAF446C55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DFCA952-5383-4747-B49B-B1DCAF446C55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DFCA952-5383-4747-B49B-B1DCAF446C55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DFCA952-5383-4747-B49B-B1DCAF446C55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

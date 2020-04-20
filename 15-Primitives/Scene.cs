@@ -15,7 +15,6 @@ namespace RayTracingTutorial15
     {
         private const int D3D12DefaultShader4ComponentMapping = 5768;
         private const int kRtvHeapSize = 3;
-        private Color4 clearColor = new Color4(0.4f, 0.6f, 0.2f, 1.0f);
 
         private readonly Window Window;
         private D3D12GraphicsContext context;
@@ -39,10 +38,7 @@ namespace RayTracingTutorial15
         private ID3D12DescriptorHeap mpSrvUavHeap;
         private ID3D12Resource mpShaderTable;
         private uint mShaderTableEntrySize;
-
-        private AccelerationStructureBuffers mTopLevelBuffers;
         private long mTlasSize = 0;
-        private Vector3 mRotation;
 
         public Scene(Window window)
         {
@@ -108,7 +104,6 @@ namespace RayTracingTutorial15
         public void CreateAccelerationStructures()
         {
             acs = new AccelerationStructures();
-            mTopLevelBuffers = new AccelerationStructureBuffers();
 
             AccelerationStructureBuffers bottomLevelBuffers = acs.CreateBottomLevelAS(mpDevice, mpCmdList);
             AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers.pResult, ref mTlasSize);
@@ -166,7 +161,7 @@ namespace RayTracingTutorial15
             subobjects[index++] = missHitRootAssociation.subobject; // 5 Associate Root Sig to Miss and CHS
 
             // Bind the payload size to the programs
-            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * 3);
+            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * 4);
             subobjects[index] = shaderConfig.subObject; // 6 Shader Config;
 
             int shaderConfigIndex = index++; // 6

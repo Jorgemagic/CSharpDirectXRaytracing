@@ -84,7 +84,7 @@ namespace RayTracingTutorial19
             }
 
             // Create main window.
-            MainWindow = new Window("Vortice Tutorial 17 - Complete", 1280, 720);
+            MainWindow = new Window("Vortice Tutorial 19 - Complete", 1280, 720);
         }
 
         private void PlatformRun()
