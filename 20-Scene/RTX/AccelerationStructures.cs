@@ -163,7 +163,7 @@ namespace RayTracingTutorial19.RTX
 
         public unsafe AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList, AccelerationStructureBuffers[] pBottomLevelAS, ref long tlasSize)
         {
-            int instances = 4;
+            int instances = 6;
 
             // First, get the size of the TLAS buffers and create them
             BuildRaytracingAccelerationStructureInputs inputs = new BuildRaytracingAccelerationStructureInputs();
@@ -189,8 +189,10 @@ namespace RayTracingTutorial19.RTX
             Matrix4x4[] transformation = new Matrix4x4[instances];
             transformation[0] = Matrix4x4.CreateTranslation(new Vector3(0, -0.5f, 0));
             transformation[1] = Matrix4x4.Identity;
-            transformation[2] = Matrix4x4.CreateScale(1.6f) * Matrix4x4.CreateTranslation(new Vector3(-2, 0.3f, 0));
-            transformation[3] = Matrix4x4.CreateScale(1.2f) * Matrix4x4.CreateTranslation(new Vector3(2, 0.1f, 0));
+            transformation[2] = Matrix4x4.CreateScale(2.5f) * Matrix4x4.CreateTranslation(new Vector3(-2, 0.7f, 0));
+            transformation[3] = Matrix4x4.CreateScale(1.9f) * Matrix4x4.CreateTranslation(new Vector3(2, 0.4f, 0));
+            transformation[4] = Matrix4x4.CreateScale(0.6f) * Matrix4x4.CreateTranslation(new Vector3(-1, -0.2f, -3));
+            transformation[5] = Matrix4x4.CreateScale(0.4f) * Matrix4x4.CreateTranslation(new Vector3(1, -0.3f, -3));
 
             pInstanceDesc[0].InstanceID = 0;                          // This value will be exposed to the shader via InstanceID()
             pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
