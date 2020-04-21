@@ -64,7 +64,7 @@ namespace RayTracingTutorial20.RTX
                     Primitives.Plane(3.0f, out vertexList, out indexList);
                     break;
                 case PrimitiveType.Quad:
-                    Primitives.Quad(100, out vertexList, out indexList);
+                    Primitives.Quad(200, out vertexList, out indexList);
                     break;
                 case PrimitiveType.Pyramid:
                     Primitives.Pyramid(1.5f, out vertexList, out indexList);

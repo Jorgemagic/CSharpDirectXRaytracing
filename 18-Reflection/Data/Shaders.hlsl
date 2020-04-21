@@ -87,7 +87,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
-	float color;
+	float4 color;
+	float4 diffuseColor = (InstanceID() == 0) ? groundAlbedo : primitiveAlbedo;
 	if (payload.recursionDepth < MaxRecursionDepth)
 	{
 		// Shadow
@@ -128,12 +129,12 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
 		// Calculate final color.
-		float4 phongColor = CalculatePhongLighting(primitiveAlbedo, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+		float4 phongColor = CalculatePhongLighting(diffuseColor, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
 		color = phongColor + reflectedColor;
 	}
 	else
 	{
-		color = CalculatePhongLighting(primitiveAlbedo, hitNormal, false, 0.9, 0.7, 50);
+		color = CalculatePhongLighting(diffuseColor, hitNormal, false, 0.9, 0.7, 50);
 	}
 
 	// Apply visibility falloff.

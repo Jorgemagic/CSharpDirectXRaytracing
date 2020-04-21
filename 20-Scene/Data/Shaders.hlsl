@@ -35,7 +35,7 @@ void rayGen()
 	ray.Direction = normalize(world.xyz - ray.Origin);
 
 	ray.TMin = 0;
-	ray.TMax = 10000;
+	ray.TMax = 1000;
 
 	RayPayload payload;
 	payload.recursionDepth = 0;
@@ -87,7 +87,30 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
-	float color;
+	float4 color;
+	float4 diffuseColor2;
+	uint instanceID = InstanceID();
+	switch (instanceID)
+	{
+		case 0:
+			diffuseColor2 = float4(1, 1, 1, 1);
+			break;
+		case 1:
+			diffuseColor2 = float4(1, 0, 0, 1);
+			break;
+		case 2:
+			diffuseColor2 = float4(0, 1, 0, 1);
+			break;
+		case 3:
+			diffuseColor2 = float4(0, 0, 1, 1);
+			break;
+		case 4:
+			diffuseColor2 = float4(0, 1, 1, 1);
+			break;
+		case 5:
+			diffuseColor2 = float4(1, 1, 0, 1);
+			break;		
+	}
 	if (payload.recursionDepth < MaxRecursionDepth)
 	{
 		// Shadow
@@ -95,7 +118,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		shadowRay.Origin = hitPosition;
 		shadowRay.Direction = normalize(lightPosition - shadowRay.Origin);
 		shadowRay.TMin = 0.01;
-		shadowRay.TMax = 100000;
+		shadowRay.TMax = 1000;
 		ShadowPayload shadowPayload;
 		TraceRay(gRtScene,
 			0  /*rayFlags*/,
@@ -111,7 +134,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		reflectionRay.Origin = hitPosition;
 		reflectionRay.Direction = reflect(WorldRayDirection(), hitNormal);
 		reflectionRay.TMin = 0.01;
-		reflectionRay.TMax = 100000;
+		reflectionRay.TMax = 1000;
 		RayPayload reflectionPayload;
 		reflectionPayload.recursionDepth = payload.recursionDepth + 1;
 		TraceRay(gRtScene,
@@ -128,12 +151,12 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
 		// Calculate final color.
-		float4 phongColor = CalculatePhongLighting(diffuseColor, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+		float4 phongColor = CalculatePhongLighting(diffuseColor2, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
 		color = phongColor + reflectedColor;
 	}
 	else
 	{
-		color = CalculatePhongLighting(diffuseColor, hitNormal, false, 0.9, 0.7, 50);
+		color = CalculatePhongLighting(diffuseColor2, hitNormal, false, 0.9, 0.7, 50);
 	}
 
 	// Apply visibility falloff.

@@ -333,7 +333,7 @@ namespace RayTracingTutorial20
             mpDevice.CreateShaderResourceView(this.acs.VertexBuffer, vertexSRVDesc, vertexSRVHandle);
 
             // CB Scene
-            Vector3 cameraPosition = new Vector3(0, 0, -6);
+            Vector3 cameraPosition = new Vector3(0, 1, -7);
             Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
             Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
             Matrix4x4 viewProj = Matrix4x4.Multiply(view, proj);
@@ -342,7 +342,7 @@ namespace RayTracingTutorial20
             {
                 projectionToWorld = Matrix4x4.Transpose(projectionToWorld),
                 cameraPosition = cameraPosition,                
-                lightPosition = new Vector3(0.0f, 1.0f, 0.0f),
+                lightPosition = new Vector3(0.0f, 1.0f, -2.0f),
                 lightDiffuseColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
                 lightAmbientColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
                 backgroundColor = new Vector4(0.4f, 0.6f, 0.2f, 1.0f),

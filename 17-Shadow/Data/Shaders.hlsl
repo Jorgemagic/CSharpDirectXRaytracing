@@ -87,8 +87,6 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
-	float color;
-
 	// Shadow
 	RayDesc shadowRay;
 	shadowRay.Origin = hitPosition;
@@ -106,9 +104,14 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		shadowPayload);	
 
 	// Calculate final color.
-	float4 phongColor = CalculatePhongLighting(primitiveAlbedo, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+	float4 diffuseColor = (InstanceID() == 0) ? groundAlbedo : primitiveAlbedo;
+	float4 phongColor = CalculatePhongLighting(diffuseColor, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+	float4 color = phongColor;
 
-	payload.color = phongColor;
+	float t = RayTCurrent();
+	color = lerp(color, backgroundColor, 1.0 - exp(-0.000002 * t * t * t));
+
+	payload.color = color;
 }
 
 [shader("miss")]
