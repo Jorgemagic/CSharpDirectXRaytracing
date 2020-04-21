@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial20
 {
     class Program
     {

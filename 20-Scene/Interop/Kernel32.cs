@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace RayTracingTutorial19.Interop
+namespace RayTracingTutorial20.Interop
 {
     internal static class Kernel32
     {        

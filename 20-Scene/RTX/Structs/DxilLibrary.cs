@@ -1,7 +1,7 @@
 ﻿using Vortice.Direct3D12;
 using Vortice.Dxc;
 
-namespace RayTracingTutorial19.Structs
+namespace RayTracingTutorial20.Structs
 {
     public class DxilLibrary
     {

@@ -1,15 +1,21 @@
-﻿static const float3 cameraPosition = float3(0, 0, -4);
-static const float4 backgroundColor = float4(0.4, 0.6, 0.2, 1.0);
-static const float4 lightAmbientColor = float4(0.2, 0.2, 0.2, 1.0);
-static const float3 lightPosition = float3(0.0, 1.0, 0.0);
-static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
+﻿cbuffer SceneCB : register(b0)
+{
+	float4x4 projectionToWorld		: packoffset(c0);
+	float4 backgroundColor			: packoffset(c4);
+	float3 cameraPosition			: packoffset(c5);
+	float MaxRecursionDepth : packoffset(c5.w);
+	float3 lightPosition			: packoffset(c6);
+	float4 lightAmbientColor		: packoffset(c7);
+	float4 lightDiffuseColor		: packoffset(c8);
+};
+
 static const float4 primitiveAlbedo = float4(1.0, 0.0, 0.0, 0.5);
 static const float InShadowRadiance = 0.35f;
-static const uint MaxRecursionDepth = 4;
 static const float diffuseCoef = 0.9;
 static const float specularCoef = 0.7;
 static const float specularPower = 50;
 static const float reflectanceCoef = 0.5;
+
 
 struct VertexPositionNormalTangentTexture
 {

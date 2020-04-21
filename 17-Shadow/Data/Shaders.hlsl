@@ -85,13 +85,13 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		Vertices[indices[2]].Normal
 	};
 
-	float3 hitNormal = (PrimitiveIndex() < 2) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
+	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
 	float color;
 
 	// Shadow
 	RayDesc shadowRay;
-	shadowRay.Origin = hitPosition; // (PrimitiveIndex() < 2) ? hitPosition : hitPosition + hitNormal * 0.01f;
+	shadowRay.Origin = hitPosition;
 	shadowRay.Direction = normalize(lightPosition - shadowRay.Origin);
 	shadowRay.TMin = 0.01;
 	shadowRay.TMax = 100000;

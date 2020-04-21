@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19.Interop
+namespace RayTracingTutorial20.Interop
 {
     #region Enums
     [Flags]

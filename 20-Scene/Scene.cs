@@ -1,6 +1,6 @@
-﻿using RayTracingTutorial19.RTX;
-using RayTracingTutorial19.RTX.Structs;
-using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial20.RTX;
+using RayTracingTutorial20.RTX.Structs;
+using RayTracingTutorial20.Structs;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,7 +10,7 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial20
 {
     public class Scene
     {
@@ -40,10 +40,15 @@ namespace RayTracingTutorial19
         private ID3D12Resource mpShaderTable;
         private uint mShaderTableEntrySize;
 
+        private SceneConstantBuffer sceneConstantBuffer;
+        private ID3D12Resource sceneCB;
+        private ID3D12Resource mpContantBuffer;
+
         private long mTlasSize = 0;
         private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
+        private CpuDescriptorHandle sceneCBVHandle;
 
         public Scene(Window window)
         {
@@ -167,8 +172,7 @@ namespace RayTracingTutorial19
             subobjects[index++] = hitRootAssociation.subobject; // 6 Associate Hit Root Sig to Hit Group
 
             // Create the miss root-signature and association
-            RootSignatureDescription emptyDesc = new RootSignatureDescription(RootSignatureFlags.LocalRootSignature);
-            Structs.LocalRootSignature missRootSignature = new Structs.LocalRootSignature(mpDevice, emptyDesc);
+            Structs.LocalRootSignature missRootSignature = new Structs.LocalRootSignature(mpDevice, rtpipeline.CreateMissRootDesc());
             subobjects[index] = missRootSignature.subobject; // 6 Miss Root Sig
 
             int missRootIndex = index++;  // 6
@@ -235,9 +239,10 @@ namespace RayTracingTutorial19
             pRtsoProps = mpPipelineState.QueryInterface<ID3D12StateObjectProperties>();
 
             // Entry 0 - ray-gen program ID and descriptor data
-            Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kRayGenShader), D3D12ShaderIdentifierSizeInBytes);
+            Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kRayGenShader), D3D12ShaderIdentifierSizeInBytes);            
+
             ulong heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
-            Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);
+            Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);            
 
             // This is where we need to set the descriptor data for the ray-gen shader. We'll get to it in the next tutorial
 
@@ -274,8 +279,8 @@ namespace RayTracingTutorial19
             resDesc.Width = mSwapChainRect.Width;
             mpOutputResource = mpDevice.CreateCommittedResource(AccelerationStructures.kDefaultHeapProps, HeapFlags.None, resDesc, ResourceStates.CopySource, null);  // Starting as copy-source to simplify onFrameRender()
 
-            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 4 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer
-            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 4, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
+            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 5 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer
+            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 5, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
 
             // Create the UAV. Based on the root signature we created it should be the first entry
             UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription();
@@ -326,7 +331,40 @@ namespace RayTracingTutorial19
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             vertexSRVHandle = srvHandle;
             mpDevice.CreateShaderResourceView(this.acs.VertexBuffer, vertexSRVDesc, vertexSRVHandle);
-        }
+
+            // CB Scene
+            Vector3 cameraPosition = new Vector3(0, 0, -6);
+            Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
+            Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
+            Matrix4x4 viewProj = Matrix4x4.Multiply(view, proj);
+            Matrix4x4.Invert(viewProj, out Matrix4x4 projectionToWorld);            
+            SceneConstantBuffer sceneConstantBuffer = new SceneConstantBuffer()
+            {
+                projectionToWorld = Matrix4x4.Transpose(projectionToWorld),
+                cameraPosition = cameraPosition,                
+                lightPosition = new Vector3(0.0f, 1.0f, 0.0f),
+                lightDiffuseColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
+                lightAmbientColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
+                backgroundColor = new Vector4(0.4f, 0.6f, 0.2f, 1.0f),
+                MaxRecursionDepth = 4,
+            };
+
+            sceneCB = this.acs.CreateBuffer(mpDevice, (uint)Unsafe.SizeOf<SceneConstantBuffer>(), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
+            IntPtr pData;
+            pData = sceneCB.Map(0, null);
+            Helpers.MemCpy(pData, sceneConstantBuffer, (uint)Unsafe.SizeOf<SceneConstantBuffer>());
+            sceneCB.Unmap(0, null);
+
+            var sceneCBV = new ConstantBufferViewDescription()
+            {
+                BufferLocation = sceneCB.GPUVirtualAddress,
+                SizeInBytes = (Unsafe.SizeOf<SceneConstantBuffer>() + 255) & ~255,
+            };
+
+            srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+            sceneCBVHandle = srvHandle;
+            mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);
+        }       
 
         private int BeginFrame()
         {

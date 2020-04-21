@@ -1,5 +1,5 @@
-﻿using RayTracingTutorial19.RTX.Structs;
-using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial20.RTX.Structs;
+using RayTracingTutorial20.Structs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial20.RTX
 {
     public class AccelerationStructures
     {

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Vortice.Direct3D12;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial20.RTX
 {
     public static class Helpers
     {

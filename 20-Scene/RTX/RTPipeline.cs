@@ -1,4 +1,4 @@
-﻿using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial20.Structs;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using Vortice.Direct3D12;
 using Vortice.Dxc;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial20.RTX
 {
     public class RTPipeline
     {
@@ -47,8 +47,10 @@ namespace RayTracingTutorial19.RTX
                         // gOutput
                         new DescriptorRange(DescriptorRangeType.UnorderedAccessView, 1, 0, 0, 0),
                         // gRtScene
-                        new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 0, 0, 1),                      
-                    }), ShaderVisibility.All)
+                        new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 0, 0, 1),
+                        // SceneCB
+                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),
+                    }), ShaderVisibility.All),
                 });
             return desc;
         }
@@ -65,11 +67,28 @@ namespace RayTracingTutorial19.RTX
                         // Indices
                         new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 1, 0, 2),
                         // Vertices
-                        new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 2, 0, 3),
-                    }), ShaderVisibility.All)                                       
+                        new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 2, 0, 3),     
+                        // SceneCB
+                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),
+                    }), ShaderVisibility.All)
               });
 
-            return desc;            
+            return desc;
+        }
+
+        public RootSignatureDescription CreateMissRootDesc()
+        {
+            RootSignatureDescription desc = new RootSignatureDescription(RootSignatureFlags.LocalRootSignature,
+              new RootParameter[]
+              {
+                   new RootParameter(new RootDescriptorTable(new DescriptorRange[]
+                    {
+                        // SceneCB
+                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),
+                    }), ShaderVisibility.All)
+              });
+
+            return desc;
         }
 
         public static string kRayGenShader = "rayGen";
