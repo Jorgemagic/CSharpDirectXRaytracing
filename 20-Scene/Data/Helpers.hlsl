@@ -9,13 +9,15 @@
 	float4 lightDiffuseColor		: packoffset(c8);
 };
 
-static const float4 primitiveAlbedo = float4(1.0, 0.0, 0.0, 0.5);
-static const float InShadowRadiance = 0.35f;
-static const float diffuseCoef = 0.9;
-static const float specularCoef = 0.7;
-static const float specularPower = 50;
-static const float reflectanceCoef = 0.5;
-
+cbuffer PrimitiveCB : register(b1)
+{
+	float4 diffuseColor		: packoffset(c0);
+	float InShadowRadiance	: packoffset(c1.x);
+	float diffuseCoef		: packoffset(c1.y);
+	float specularCoef		: packoffset(c1.z);
+	float specularPower		: packoffset(c1.w);
+	float reflectanceCoef	: packoffset(c2.x);
+}
 
 struct VertexPositionNormalTangentTexture
 {

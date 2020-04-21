@@ -279,8 +279,8 @@ namespace RayTracingTutorial20
             resDesc.Width = mSwapChainRect.Width;
             mpOutputResource = mpDevice.CreateCommittedResource(AccelerationStructures.kDefaultHeapProps, HeapFlags.None, resDesc, ResourceStates.CopySource, null);  // Starting as copy-source to simplify onFrameRender()
 
-            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 5 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer
-            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 5, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
+            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 5 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer, 1 primitiveConstantBuffer
+            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 6, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
 
             // Create the UAV. Based on the root signature we created it should be the first entry
             UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription();
@@ -364,7 +364,34 @@ namespace RayTracingTutorial20
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             sceneCBVHandle = srvHandle;
             mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);
-        }       
+
+            // CB Primitive
+            PrimitiveConstantBuffer primitiveConstantBuffer = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(1.0f, 0.0f, 0.0f, 0.5f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.9f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.5f,
+            };
+
+            ID3D12Resource primitiveCB = this.acs.CreateBuffer(mpDevice, (uint)Unsafe.SizeOf<PrimitiveConstantBuffer>(), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
+            IntPtr pData2;
+            pData2 = primitiveCB.Map(0, null);
+            Helpers.MemCpy(pData2, primitiveConstantBuffer, (uint)Unsafe.SizeOf<PrimitiveConstantBuffer>());
+            primitiveCB.Unmap(0, null);
+
+            var primitiveCBV = new ConstantBufferViewDescription()
+            {
+                BufferLocation = primitiveCB.GPUVirtualAddress,
+                SizeInBytes = (Unsafe.SizeOf<PrimitiveConstantBuffer>() + 255) & ~255,
+            };
+
+            srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+            var primitiveCBVHandle = srvHandle;
+            mpDevice.CreateConstantBufferView(primitiveCBV, primitiveCBVHandle);
+        }
 
         private int BeginFrame()
         {

@@ -70,6 +70,8 @@ namespace RayTracingTutorial20.RTX
                         new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 2, 0, 3),     
                         // SceneCB
                         new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),
+                        // PrimitiveCB
+                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 1, 0, 5),
                     }), ShaderVisibility.All)
               });
 

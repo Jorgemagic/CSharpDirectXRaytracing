@@ -124,16 +124,16 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 			reflectionPayload);
 		float4 reflectionColor = reflectionPayload.color;
 
-		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, primitiveAlbedo);
+		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, diffuseColor);
 		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
 		// Calculate final color.
-		float4 phongColor = CalculatePhongLighting(primitiveAlbedo, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
+		float4 phongColor = CalculatePhongLighting(diffuseColor, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
 		color = phongColor + reflectedColor;
 	}
 	else
 	{
-		color = CalculatePhongLighting(primitiveAlbedo, hitNormal, false, 0.9, 0.7, 50);
+		color = CalculatePhongLighting(diffuseColor, hitNormal, false, 0.9, 0.7, 50);
 	}
 
 	// Apply visibility falloff.
