@@ -1,13 +1,13 @@
 ﻿// Copyright (c) Amer Koleci and contributors.
 // Distributed under the MIT license. See the LICENSE file in the project root for more information.
 
-using RayTracingTutorial19.Interop;
+using RayTracingTutorial17.Interop;
 using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial17
 {
     public abstract partial class Application : IDisposable
     {
@@ -84,7 +84,7 @@ namespace RayTracingTutorial19
             }
 
             // Create main window.
-            MainWindow = new Window("Vortice Tutorial 17 - Complete", 1280, 720);
+            MainWindow = new Window("Vortice Tutorial 17 - Shadow", 1280, 720);
         }
 
         private void PlatformRun()

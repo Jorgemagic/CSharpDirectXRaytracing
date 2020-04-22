@@ -1,6 +1,6 @@
-﻿using RayTracingTutorial19.RTX;
-using RayTracingTutorial19.RTX.Structs;
-using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial18.RTX;
+using RayTracingTutorial18.RTX.Structs;
+using RayTracingTutorial18.Structs;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,7 +10,7 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial18
 {
     public class Scene
     {
@@ -41,7 +41,6 @@ namespace RayTracingTutorial19
         private uint mShaderTableEntrySize;
 
         private long mTlasSize = 0;
-        private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
 

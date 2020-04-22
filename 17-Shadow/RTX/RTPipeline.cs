@@ -1,4 +1,4 @@
-﻿using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial17.Structs;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using Vortice.Direct3D12;
 using Vortice.Dxc;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial17.RTX
 {
     public class RTPipeline
     {

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace RayTracingTutorial19.RTX.Structs
+namespace RayTracingTutorial17.RTX.Structs
 {
     public struct VertexPositionNormalTangentTexture
     {

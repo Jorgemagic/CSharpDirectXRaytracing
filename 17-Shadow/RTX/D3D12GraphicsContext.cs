@@ -1,4 +1,4 @@
-﻿using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial17.Structs;
 using System;
 using System.Threading;
 using Vortice.Direct3D12;
@@ -6,7 +6,7 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial17.RTX
 {
     public class D3D12GraphicsContext
     {

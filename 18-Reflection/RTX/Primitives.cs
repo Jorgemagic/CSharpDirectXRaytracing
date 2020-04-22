@@ -1,10 +1,10 @@
-﻿using RayTracingTutorial19.RTX.Structs;
+﻿using RayTracingTutorial18.RTX.Structs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace RayTracingTutorial19.RTX
+namespace RayTracingTutorial18.RTX
 {
     public static class Primitives
     {

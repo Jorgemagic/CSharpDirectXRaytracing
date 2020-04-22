@@ -1,6 +1,6 @@
-﻿using RayTracingTutorial19.RTX;
-using RayTracingTutorial19.RTX.Structs;
-using RayTracingTutorial19.Structs;
+﻿using RayTracingTutorial17.RTX;
+using RayTracingTutorial17.RTX.Structs;
+using RayTracingTutorial17.Structs;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,13 +10,12 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial17
 {
     public class Scene
     {
         private const int D3D12DefaultShader4ComponentMapping = 5768;
         private const int kRtvHeapSize = 3;
-        private Color4 clearColor = new Color4(0.4f, 0.6f, 0.2f, 1.0f);
 
         private readonly Window Window;
         private D3D12GraphicsContext context;
@@ -41,7 +40,6 @@ namespace RayTracingTutorial19
         private uint mShaderTableEntrySize;
 
         private long mTlasSize = 0;
-        private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
 

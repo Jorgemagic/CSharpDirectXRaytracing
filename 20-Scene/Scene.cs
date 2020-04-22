@@ -39,13 +39,9 @@ namespace RayTracingTutorial20
         private ID3D12DescriptorHeap mpSrvUavHeap;
         private ID3D12Resource mpShaderTable;
         private uint mShaderTableEntrySize;
-
-        private SceneConstantBuffer sceneConstantBuffer;
         private ID3D12Resource sceneCB;
-        private ID3D12Resource mpContantBuffer;
 
         private long mTlasSize = 0;
-        private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
         private CpuDescriptorHandle sceneCBVHandle;

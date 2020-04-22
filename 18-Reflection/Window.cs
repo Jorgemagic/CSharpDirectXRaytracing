@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Amer Koleci and contributors.
 // Distributed under the MIT license. See the LICENSE file in the project root for more information.
 
-using RayTracingTutorial19.Interop;
+using RayTracingTutorial18.Interop;
 using System;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial19
+namespace RayTracingTutorial18
 {
     public class Window
     {

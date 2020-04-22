@@ -1,6 +1,6 @@
 ﻿using Vortice.Direct3D12;
 
-namespace RayTracingTutorial19.Structs
+namespace RayTracingTutorial18.Structs
 {
     public struct PipelineConfig
     {

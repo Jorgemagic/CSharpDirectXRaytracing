@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "18-Reflection", "18-Reflect
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "20-Scene", "20-Scene\20-Scene.csproj", "{5C2F44B3-20DE-4C99-A097-86550D20BB65}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "21-Scene-PerInstanceConstantBuffer", "21-Scene-PerInstanceConstantBuffer\21-Scene-PerInstanceConstantBuffer.csproj", "{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,10 @@ Global
 		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C2F44B3-20DE-4C99-A097-86550D20BB65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

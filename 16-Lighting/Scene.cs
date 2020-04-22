@@ -43,7 +43,6 @@ namespace RayTracingTutorial16
 
         private AccelerationStructureBuffers mTopLevelBuffers;
         private long mTlasSize = 0;
-        private Vector3 mRotation;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
 
