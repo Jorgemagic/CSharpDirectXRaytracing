@@ -343,8 +343,8 @@ namespace RayTracingTutorial20
                 projectionToWorld = Matrix4x4.Transpose(projectionToWorld),
                 cameraPosition = cameraPosition,                
                 lightPosition = new Vector3(0.0f, 1.0f, -2.0f),
-                lightDiffuseColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
-                lightAmbientColor = new Vector4(0.2f, 0.2f, 0.2f, 1.0f),
+                lightDiffuseColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
+                lightAmbientColor = new Vector4(0.1f, 0.1f, 0.1f, 1.0f),
                 backgroundColor = new Vector4(0.4f, 0.6f, 0.2f, 1.0f),
                 MaxRecursionDepth = 4,
             };
@@ -368,12 +368,12 @@ namespace RayTracingTutorial20
             // CB Primitive
             PrimitiveConstantBuffer primitiveConstantBuffer = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(1.0f, 0.0f, 0.0f, 0.5f),
+                diffuseColor = new Vector4(0.8f, 0f, 0f, 1.0f),
                 inShadowRadiance = 0.35f,
-                diffuseCoef = 0.9f,
+                diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
                 specularPower = 50,
-                reflectanceCoef = 0.5f,
+                reflectanceCoef = 0.7f,
             };
 
             ID3D12Resource primitiveCB = this.acs.CreateBuffer(mpDevice, (uint)Unsafe.SizeOf<PrimitiveConstantBuffer>(), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
