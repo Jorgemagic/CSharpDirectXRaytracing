@@ -65,3 +65,9 @@ Nothing to show
 ### [Tutorial 14 Refit](14-Refit/)
 
 ![alt Rotate triangles](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/UpdateGeometryTransform.png)
+
+## Extra Tutorials
+
+### [Tutorial 15 Primitives](15-Primitives/)
+
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Primitives.png)
