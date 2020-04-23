@@ -68,6 +68,9 @@ Nothing to show
 
 ## Extra Tutorials
 
+After I ported Raytracing DXR Nvidia tutorials to CSharp I think that would be a great idea to extend theses tutorials with some more. So I am going to add new extra raytracing tutorials to explain how to create more complex raytracing scenes.
+
 ### [Tutorial 15 Primitives](15-Primitives/)
 
+How to create a Raytracing Acceleration Structure from vertex and index geometry buffers.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Primitives.png)
