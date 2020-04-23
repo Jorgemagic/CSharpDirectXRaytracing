@@ -353,7 +353,7 @@ namespace RayTracingTutorial21
                 lightPosition = new Vector3(0.0f, 1.0f, -2.0f),
                 lightDiffuseColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
                 lightAmbientColor = new Vector4(0.1f, 0.1f, 0.1f, 1.0f),
-                backgroundColor = new Vector4(0.4f, 0.6f, 0.2f, 1.0f),
+                backgroundColor = new Vector4(0.2f, 0.21f, 0.9f, 1.0f),
                 MaxRecursionDepth = 4,
             };
 
@@ -380,7 +380,7 @@ namespace RayTracingTutorial21
             PrimitiveConstantBuffer[] primitiveConstantBuffer = new PrimitiveConstantBuffer[instances];
             primitiveConstantBuffer[0] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.3f, 0.3f, 0.3f, 1.0f),
+                diffuseColor = new Vector4(0.9f, 0.9f, 0.9f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.9f,
                 specularCoef = 0.7f,
@@ -389,7 +389,7 @@ namespace RayTracingTutorial21
             };
             primitiveConstantBuffer[1] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.8f, 0f, 0f, 1.0f),
+                diffuseColor = new Vector4(0.6f, 0.1f, 0.1f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
@@ -398,7 +398,7 @@ namespace RayTracingTutorial21
             };
             primitiveConstantBuffer[2] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.0f, 0.8f, 0f, 1.0f),
+                diffuseColor = new Vector4(0.2f, 0.6f, 0.2f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
@@ -407,7 +407,7 @@ namespace RayTracingTutorial21
             };
             primitiveConstantBuffer[3] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.0f, 0f, 0.8f, 1.0f),
+                diffuseColor = new Vector4(0.6f, 0.2f, 0.6f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
@@ -416,7 +416,7 @@ namespace RayTracingTutorial21
             };
             primitiveConstantBuffer[4] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.8f, 0.8f, 0f, 1.0f),
+                diffuseColor = new Vector4(0.6f, 0.6f, 0f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
@@ -425,7 +425,7 @@ namespace RayTracingTutorial21
             };
             primitiveConstantBuffer[5] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.0f, 0.8f, 0.8f, 1.0f),
+                diffuseColor = new Vector4(0.0f, 0.6f, 0.6f, 1.0f),
                 inShadowRadiance = 0.35f,
                 diffuseCoef = 0.1f,
                 specularCoef = 0.7f,
