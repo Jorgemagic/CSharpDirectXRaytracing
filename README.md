@@ -74,3 +74,8 @@ After I ported Raytracing DXR Nvidia tutorials to CSharp I think that would be a
 
 How to create a Raytracing Acceleration Structure from vertex and index geometry buffers.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Primitives.png)
+
+### [Tutorial 16 Lighting](16-Lighting/)
+
+How to lighting mesh using Raytracing pipeline. The acceleration Structures only have information about the vertex position of the mesh so we need to pass vertexBuffer and indexBuffer information to the shader to reconstruct the vertex information after a hit.
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Lighting.png)
