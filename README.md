@@ -79,3 +79,8 @@ How to create a Raytracing Acceleration Structure from vertex and index geometry
 
 How to lighting mesh using Raytracing pipeline. The acceleration Structures only have information about the vertex position of the mesh so we need to pass vertexBuffer and indexBuffer information to the shader to reconstruct the vertex information after a hit.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Lighting.png)
+
+### [Tutorial 17 Shadow](17-Shadow/)
+
+How to project shadows using Raytracing pipeline. In this tutorial, we are going to add a second geometry (ground) to the Acceleration Structure and throw a second ray to know whether a hit point is in shadow.
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Shadow01.png)
