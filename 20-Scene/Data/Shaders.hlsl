@@ -133,7 +133,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	}
 	else
 	{
-		color = CalculatePhongLighting(diffuseColor, hitNormal, false, 0.9, 0.7, 50);
+		color = CalculatePhongLighting(diffuseColor, hitNormal, false, diffuseCoef, specularCoef, specularPower);
 	}
 
 	// Apply visibility falloff.

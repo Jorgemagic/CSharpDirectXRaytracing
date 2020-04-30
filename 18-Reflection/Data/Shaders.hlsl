@@ -54,7 +54,12 @@ void rayGen()
 [shader("miss")]
 void miss(inout RayPayload payload)
 {
-	payload.color = backgroundColor;
+	float4 gradientStart = float4(0.4, 0.6, 0.2,1.0);
+	float4 gradientEnd = float4(0.5, 0.6, 1.0, 1.0);
+	float3 unitDir = normalize(WorldRayDirection());
+	float t = 0.5 * unitDir.y;
+	payload.color = (1.0 - t) * gradientStart + t * gradientEnd;
+	//payload.color = backgroundColor;
 }
 
 float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttributes attr)
@@ -86,7 +91,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	};
 
 	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
-
+	
 	float4 color;
 	float4 diffuseColor = (InstanceID() == 0) ? groundAlbedo : primitiveAlbedo;
 	if (payload.recursionDepth < MaxRecursionDepth)
@@ -125,7 +130,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 			reflectionPayload);
 		float4 reflectionColor = reflectionPayload.color;
 
-		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, primitiveAlbedo);
+		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, diffuseColor);
 		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
 		// Calculate final color.
@@ -134,7 +139,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	}
 	else
 	{
-		color = CalculatePhongLighting(diffuseColor, hitNormal, false, 0.9, 0.7, 50);
+		color = CalculatePhongLighting(diffuseColor, hitNormal, false, diffuseCoef, specularCoef, specularPower);
 	}
 
 	// Apply visibility falloff.
