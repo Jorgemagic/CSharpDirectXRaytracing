@@ -96,5 +96,5 @@ How to make reflection meshes using Raytracing pipeline. In this tutorial, we ar
 
 ### [Tutorial 20 Instancing](20-Scene/)
 
-How to do instancing with DirectX12 Raytracing pipeline in CSharp is my fifth extra tutorial. In this tutorial, we are going to use the Top Level Acceleration Structure to instance multiples geometries defined in the Bottom Level Acceleration Structure and create a scene. In addition, we will add two constant buffers (Scene parameters and Primitive parameters) to pass scene configuration to shader.
+How to do instancing using Raytracing pipeline. In this tutorial, we are going to use the Top Level Acceleration Structure to instance multiple geometries defined in the Bottom Level Acceleration Structure and create a scene. In addition, we will add two constant buffers (Scene parameters and Primitive parameters) to pass scene configuration to shader.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/InstancingScene.png)
