@@ -89,3 +89,12 @@ How to project shadows using Raytracing pipeline. In this tutorial, we are going
 
 How to make reflection meshes using Raytracing pipeline. In this tutorial, we are going to add a third reflected ray for each hit point recursively to calculate the final color (4 rebounds maximum deep). I also added fresnel and visibility falloff to improve the render. Most of the important changes are in the shader.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/Reflection.png)
+
+
+### [Tutorial 19 xxx] under construction
+
+
+### [Tutorial 20 Instancing](20-Scene/)
+
+How to do instancing with DirectX12 Raytracing pipeline in CSharp is my fifth extra tutorial. In this tutorial, we are going to use the Top Level Acceleration Structure to instance multiples geometries defined in the Bottom Level Acceleration Structure and create a scene. In addition, we will add two constant buffers (Scene parameters and Primitive parameters) to pass scene configuration to shader.
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/InstancingScene.png)
