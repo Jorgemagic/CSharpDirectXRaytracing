@@ -255,14 +255,14 @@ namespace RayTracingTutorial22.RTX
             return buffers;
         }
 
-        public unsafe AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList, AccelerationStructureBuffers[] pBottomLevelAS, ref long tlasSize)
+        public unsafe void CreateTopLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList, AccelerationStructureBuffers[] pBottomLevelAS, ref long tlasSize, float rotation, bool update, ref AccelerationStructureBuffers buffers)
         {
             int instances = 2;
 
             // First, get the size of the TLAS buffers and create them
             BuildRaytracingAccelerationStructureInputs inputs = new BuildRaytracingAccelerationStructureInputs();
             inputs.Layout = ElementsLayout.Array;
-            inputs.Flags = RaytracingAccelerationStructureBuildFlags.None;
+            inputs.Flags = RaytracingAccelerationStructureBuildFlags.AllowUpdate;
             inputs.DescriptorsCount = instances;
             inputs.Type = RaytracingAccelerationStructureType.TopLevel;
 
@@ -270,19 +270,27 @@ namespace RayTracingTutorial22.RTX
             info = pDevice.GetRaytracingAccelerationStructurePrebuildInfo(inputs);
 
             // Create the buffers
-            AccelerationStructureBuffers buffers = new AccelerationStructureBuffers();
-            buffers.pScratch = this.CreateBuffer(pDevice, (uint)info.ScratchDataSizeInBytes, ResourceFlags.AllowUnorderedAccess, ResourceStates.UnorderedAccess, kDefaultHeapProps);
-            buffers.pResult = this.CreateBuffer(pDevice, (uint)info.ResultDataMaxSizeInBytes, ResourceFlags.AllowUnorderedAccess, ResourceStates.RaytracingAccelerationStructure, kDefaultHeapProps);
-            tlasSize = info.ResultDataMaxSizeInBytes;
+            if (update)
+            {
+                // If this a request for an update, then the TLAS was already used in a DispatchRay() call. We need a UAV barrier to make sure the read operation ends before updating the buffer
+                ResourceBarrier uavBarrier1 = new ResourceBarrier(new ResourceUnorderedAccessViewBarrier(buffers.pResult));
+                pCmdList.ResourceBarrier(uavBarrier1);
+            }
+            else
+            {
+                buffers.pScratch = this.CreateBuffer(pDevice, (uint)info.ScratchDataSizeInBytes, ResourceFlags.AllowUnorderedAccess, ResourceStates.UnorderedAccess, kDefaultHeapProps);
+                buffers.pResult = this.CreateBuffer(pDevice, (uint)info.ResultDataMaxSizeInBytes, ResourceFlags.AllowUnorderedAccess, ResourceStates.RaytracingAccelerationStructure, kDefaultHeapProps);
+                buffers.pInstanceDesc = this.CreateBuffer(pDevice, (uint)(Unsafe.SizeOf<FixedRaytracingInstanceDescription>() * instances), ResourceFlags.None, ResourceStates.GenericRead, kUploadHeapProps);
+                tlasSize = info.ResultDataMaxSizeInBytes;
+            }
 
             // The instance desc should be inside a buffer, create and map the buffer
-            buffers.pInstanceDesc = this.CreateBuffer(pDevice, (uint)(Unsafe.SizeOf<FixedRaytracingInstanceDescription>() * instances), ResourceFlags.None, ResourceStates.GenericRead, kUploadHeapProps);
             FixedRaytracingInstanceDescription[] pInstanceDesc = new FixedRaytracingInstanceDescription[instances];
 
             // The transformation matrices for the instances
             Matrix4x4[] transformation = new Matrix4x4[instances];
             transformation[0] = Matrix4x4.CreateTranslation(0, -1.0f, 0);
-            transformation[1] = Matrix4x4.CreateFromYawPitchRoll((float)-Math.PI, (float)Math.PI/2, (float)Math.PI/2) * Matrix4x4.CreateTranslation(0, 0.4f, 0) * Matrix4x4.CreateScale(1.5f);
+            transformation[1] = Matrix4x4.CreateFromYawPitchRoll((float)rotation, (float)Math.PI / 2, (float)Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0.4f, 0) * Matrix4x4.CreateScale(1.2f);
 
             pInstanceDesc[0].InstanceID = 0;                          // This value will be exposed to the shader via InstanceID()
             pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
@@ -313,13 +321,19 @@ namespace RayTracingTutorial22.RTX
             asDesc.DestinationAccelerationStructureData = buffers.pResult.GPUVirtualAddress;
             asDesc.ScratchAccelerationStructureData = buffers.pScratch.GPUVirtualAddress;
 
+
+            // If this is an update operation, set the source buffer and the perform_update flag
+            if (update)
+            {
+                asDesc.Inputs.Flags |= RaytracingAccelerationStructureBuildFlags.PerformUpdate;
+                asDesc.SourceAccelerationStructureData = buffers.pResult.GPUVirtualAddress;
+            }
+
             pCmdList.BuildRaytracingAccelerationStructure(asDesc);
 
             // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
             ResourceBarrier uavBarrier = new ResourceBarrier(new ResourceUnorderedAccessViewBarrier(buffers.pResult));
-            pCmdList.ResourceBarrier(uavBarrier);
-
-            return buffers;
+            pCmdList.ResourceBarrier(uavBarrier);            
         }
     }
 }

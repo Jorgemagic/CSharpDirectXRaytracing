@@ -35,6 +35,7 @@ namespace RayTracingTutorial22
         private ID3D12StateObject mpPipelineState;
         private ID3D12RootSignature mpEmptyRootSig;
         private AccelerationStructures acs;
+        private AccelerationStructureBuffers[] bottomLevelBuffers;
         private ID3D12Resource mpOutputResource;
         private ID3D12DescriptorHeap mpSrvUavHeap;
         private ID3D12Resource mpShaderTable;
@@ -43,6 +44,9 @@ namespace RayTracingTutorial22
         private long mTlasSize = 0;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
+
+        private AccelerationStructureBuffers topLevelBuffers;
+        private float mRotation;
 
         public Scene(Window window)
         {
@@ -109,11 +113,11 @@ namespace RayTracingTutorial22
         {
             acs = new AccelerationStructures();
 
-            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[2];
-            bottomLevelBuffers[0] = acs.CreatePlaneBottomLevelAS(mpDevice, mpCmdList);
-            bottomLevelBuffers[1] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
-
-            AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers, ref mTlasSize);
+            this.bottomLevelBuffers = new AccelerationStructureBuffers[2];
+            this.bottomLevelBuffers[0] = acs.CreatePlaneBottomLevelAS(mpDevice, mpCmdList);
+            this.bottomLevelBuffers[1] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
+        
+            acs.CreateTopLevelAS(mpDevice, mpCmdList, this.bottomLevelBuffers, ref mTlasSize,0,false, ref topLevelBuffers);
 
             // The tutorial doesn't have any resource lifetime management, so we flush and sync here. This is not required by the DXR spec - you can submit the list whenever you like as long as you take care of the resources lifetime.
             mFenceValue = context.SubmitCommandList(mpCmdList, mpCmdQueue, mpFence, mFenceValue);
@@ -339,6 +343,10 @@ namespace RayTracingTutorial22
         public bool DrawFrame(Action<int, int> draw, [CallerMemberName] string frameName = null)
         {
             int rtvIndex = BeginFrame();
+
+            // Refit the top-level acceleration structure
+            this.acs.CreateTopLevelAS(mpDevice, mpCmdList, this.bottomLevelBuffers, ref mTlasSize, this.mRotation, true, ref topLevelBuffers);
+            this.mRotation += 0.005f;
 
             // Let's raytrace
             context.ResourceBarrier(mpCmdList, mpOutputResource, ResourceStates.CopySource, ResourceStates.UnorderedAccess);

@@ -45,8 +45,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "21-Scene-PerInstanceConstan
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "22-GLTFModel", "22-GLTFModel\22-GLTFModel.csproj", "{4AB913A7-FDD6-415E-8863-849FEA556774}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "23-Model", "23-Model\23-Model.csproj", "{56D57504-6B04-4FB4-AA39-E40DC25A5A8F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,10 +135,6 @@ Global
 		{4AB913A7-FDD6-415E-8863-849FEA556774}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AB913A7-FDD6-415E-8863-849FEA556774}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AB913A7-FDD6-415E-8863-849FEA556774}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56D57504-6B04-4FB4-AA39-E40DC25A5A8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56D57504-6B04-4FB4-AA39-E40DC25A5A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56D57504-6B04-4FB4-AA39-E40DC25A5A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56D57504-6B04-4FB4-AA39-E40DC25A5A8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
