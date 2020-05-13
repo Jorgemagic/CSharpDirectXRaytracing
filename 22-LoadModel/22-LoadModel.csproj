@@ -19,13 +19,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\Box.glb">
+    <None Update="GLTF\Avocado.glb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Data\DamagedHelmet.glb">
+    <None Update="GLTF\Box.glb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Data\duck.glb">
+    <None Update="GLTF\DamagedHelmet.glb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="GLTF\Duck.glb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Data\Helpers.hlsl">

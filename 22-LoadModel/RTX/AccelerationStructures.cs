@@ -1,8 +1,9 @@
-﻿using RayTracingTutorial22.GLTF;
+﻿using glTFLoader;
 using RayTracingTutorial22.RTX.Structs;
 using RayTracingTutorial22.Structs;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -48,57 +49,82 @@ namespace RayTracingTutorial22.RTX
             return pBuffer;
         }
 
+        private unsafe void AttributeCopyData<T>(ref T[] array, int attributeByteLength, IntPtr attributePointer) 
+            where T : unmanaged
+        {
+            array = new T[attributeByteLength / Unsafe.SizeOf<T>()];
+            fixed (T* arrayPtr = &array[0])
+            {
+                Unsafe.CopyBlock((void*)arrayPtr, (void*)attributePointer, (uint)attributeByteLength);
+            }
+        }
+
         public unsafe void LoadGLTF(string filePath, ID3D12Device5 pDevice, out ID3D12Resource vertexBuffer, out uint vertexCount, out ID3D12Resource indexBuffer, out uint indexCount)
         {
-            using (var gltf = new GLTFLoader(filePath))
+            using (var stream = File.OpenRead(filePath))
             {
-                var mesh = gltf.Meshes[0];
+                if (stream == null || !stream.CanRead)
+                {
+                    throw new ArgumentException("Invalid parameter. Stream must be readable", "imageStream");
+                }
 
-                /*var mesh = gltf.model.Meshes[0];
+                var model = Interface.LoadModel(stream);
+            
+                // read all buffers
+                int numBuffers = model.Buffers.Length;
+                var buffers = new BufferInfo[numBuffers];
 
-                var primitives = mesh.Primitives[0];
+                for (int i = 0; i < numBuffers; ++i)
+                {
+                    var bufferBytes = model.LoadBinaryBuffer(i, filePath);
+                    buffers[i] = new BufferInfo(bufferBytes);
+                }
 
-                var attributes = primitives.Attributes.Values.ToArray();
-                var attribute0_Accessor = gltf.model.Accessors[attributes[0]];
+                // Read only first mesh and first primitive
+                var mesh = model.Meshes[0];
+                var primitive = mesh.Primitives[0];
 
-                var attribute0_bufferView = gltf.model.BufferViews[attribute0_Accessor.BufferView.Value];
+                // Create Vertex Buffer
+                var attributes = primitive.Attributes.ToArray();
 
+                Vector3[] positions = new Vector3[0];
+                Vector3[] normals = new Vector3[0];
+                Vector2[] texcoords = new Vector2[0];
+                Vector3[] tangents = new Vector3[0];
 
+                for (int i = 0; i < attributes.Length; i++)
+                {
+                    var attributeAccessor = model.Accessors[attributes[i].Value];
+                    var attributebufferView = model.BufferViews[attributeAccessor.BufferView.Value];
+                    IntPtr attributePointer = buffers[attributebufferView.Buffer].bufferPointer + attributebufferView.ByteOffset + attributeAccessor.ByteOffset;
 
-                IntPtr attribute0_pointer = gltf.Buffers[attribute0_bufferView.Buffer].bufferPointer + attribute0_bufferView.ByteOffset + attribute0_Accessor.ByteOffset;
-                int attribute0_byteLength = attribute0_Accessor.Count;
+                    string attributeKey = attributes[i].Key;
+                    if (attributeKey.Contains("POSITION"))
+                    {
+                        this.AttributeCopyData(ref positions, attributeAccessor.Count * Unsafe.SizeOf<Vector3>(), attributePointer);
+                    }
+                    else if (attributeKey.Contains("NORMAL"))
+                    {
+                        this.AttributeCopyData(ref normals, attributeAccessor.Count * Unsafe.SizeOf<Vector3>(), attributePointer);
+                    }
+                    else if (attributeKey.Contains("TANGENT"))
+                    {
+                        this.AttributeCopyData(ref tangents, attributeAccessor.Count * Unsafe.SizeOf<Vector3>(), attributePointer);
+                    }
+                    else if (attributeKey.Contains("TEXCOORD"))
+                    {
+                        this.AttributeCopyData(ref texcoords, attributeAccessor.Count * Unsafe.SizeOf<Vector2>(), attributePointer);
+                    }
+                }
 
-                int attribute0_Count = attribute0_byteLength / Unsafe.SizeOf<Vector3>();
-                Vector3* positions = stackalloc Vector3[attribute0_Count];
-                Unsafe.CopyBlock((void*)positions, (void*)vpositionsPointer, (uint)positionsCount);*/
-
-                // Vertex buffer
-
-                // Positions
-                var vpositionsBufferView = mesh.AttributeBufferView[1];
-                int positionsCount = vpositionsBufferView.ByteLength / Unsafe.SizeOf<Vector3>();
-                Vector3* positions = stackalloc Vector3[positionsCount];
-                var vpositionsPointer = gltf.Buffers[vpositionsBufferView.Buffer].bufferPointer + vpositionsBufferView.ByteOffset;
-                Unsafe.CopyBlock((void*)positions, (void*)vpositionsPointer, (uint)vpositionsBufferView.ByteLength);
-
-                // Normals
-                var vnormalsBufferView = mesh.AttributeBufferView[0];
-                int normalsCount = vnormalsBufferView.ByteLength / Unsafe.SizeOf<Vector3>();
-                Vector3* normals = stackalloc Vector3[normalsCount];
-                var vnormalsPointer = gltf.Buffers[vnormalsBufferView.Buffer].bufferPointer + vnormalsBufferView.ByteOffset;
-                Unsafe.CopyBlock((void*)normals, (void*)vnormalsPointer, (uint)vnormalsBufferView.ByteLength);
-
-                // Texcoords
-                var vtexcoordsBufferView = mesh.AttributeBufferView[2];
-                int texcoordsCount = vtexcoordsBufferView.ByteLength / Unsafe.SizeOf<Vector2>();
-                Vector2* texcoords = stackalloc Vector2[texcoordsCount];
-                var vtexcoordsPointer = gltf.Buffers[vtexcoordsBufferView.Buffer].bufferPointer + vtexcoordsBufferView.ByteOffset;
-                Unsafe.CopyBlock((void*)texcoords, (void*)vtexcoordsPointer, (uint)vtexcoordsBufferView.ByteLength);
-
-                VertexPositionNormalTangentTexture[] vertexData = new VertexPositionNormalTangentTexture[positionsCount];
+                VertexPositionNormalTangentTexture[] vertexData = new VertexPositionNormalTangentTexture[positions.Length];
                 for (int i = 0; i < vertexData.Length; i++)
                 {
-                    vertexData[i] = new VertexPositionNormalTangentTexture(positions[i], normals[i], Vector3.Zero, texcoords[i]);
+                    Vector3 position = positions[i];
+                    Vector3 normal = (normals.Length > i) ? normals[i] : Vector3.Zero;
+                    Vector2 texcoord = (texcoords.Length > i) ? texcoords[i] : Vector2.Zero;
+                    Vector3 tangent = (tangents.Length > i) ? tangents[i] : Vector3.Zero;
+                    vertexData[i] = new VertexPositionNormalTangentTexture(position, normal, tangent, texcoord);
                 }
 
                 vertexCount = (uint)vertexData.Length;
@@ -107,35 +133,22 @@ namespace RayTracingTutorial22.RTX
                 Helpers.MemCpy(pData, vertexData, (uint)(Unsafe.SizeOf<VertexPositionNormalTangentTexture>() * vertexData.Length));
                 vertexBuffer.Unmap(0, null);
 
-                // Index buffer
-                // Indices
-                /*var indicesBufferView = mesh.IndicesBufferView;
-                int indicesCount = indicesBufferView.ByteLength / sizeof(ushort);
-                ushort[] indexData = new ushort[indicesCount];
-                var indicesPointer = gltf.Buffers[indicesBufferView.Buffer].bufferPointer + indicesBufferView.ByteOffset;
-                fixed (ushort* indicesPtr = &indexData[0])
-                {
-                    Unsafe.CopyBlock((void*)indicesPtr, (void*)indicesPointer, (uint)indicesBufferView.ByteLength);
-                }
-
-                indexCount = (uint)indexData.Length;
-                indexBuffer = CreateBuffer(pDevice, (uint)(sizeof(ushort) * indexData.Length), ResourceFlags.None, ResourceStates.GenericRead, kUploadHeapProps);
+                // Create Index buffer                
+                var indicesAccessor = model.Accessors[primitive.Indices.Value];
+                var indicesbufferView = model.BufferViews[indicesAccessor.BufferView.Value];
+                IntPtr indicesPointer = buffers[indicesbufferView.Buffer].bufferPointer + indicesbufferView.ByteOffset + indicesAccessor.ByteOffset;                
+                indexCount = (uint)indicesAccessor.Count;
+                indexBuffer = CreateBuffer(pDevice, (uint)indicesAccessor.Count * sizeof(ushort), ResourceFlags.None, ResourceStates.GenericRead, kUploadHeapProps);
                 IntPtr pIB = indexBuffer.Map(0, null);
-                Helpers.MemCpy(pIB, indexData, (uint)(sizeof(ushort) * indexData.Length));
-                indexBuffer.Unmap(0, null);*/
-
-                var indexBufferView = mesh.IndicesBufferView;
-                var indexPointer = gltf.Buffers[indexBufferView.Buffer].bufferPointer + indexBufferView.ByteOffset;
-                indexCount = (uint)indexBufferView.ByteLength / sizeof(ushort);
-                indexBuffer = CreateBuffer(pDevice, (uint)indexBufferView.ByteLength, ResourceFlags.None, ResourceStates.GenericRead, kUploadHeapProps);
-                IntPtr pIB = indexBuffer.Map(0, null);
-                Unsafe.CopyBlock((void*)pIB, (void*)indexPointer, (uint)indexBufferView.ByteLength);
+                Unsafe.CopyBlock((void*)pIB, (void*)indicesPointer, (uint)indicesAccessor.Count * sizeof(ushort));
                 indexBuffer.Unmap(0, null);
 
-                //vertexBuffer = null;
-                //vertexCount = 0;
-                //indexBuffer = null;
-                //indexCount = 0;
+                for (int i = 0; i < numBuffers; ++i)
+                {                    
+                    buffers[i].Dispose();
+                }
+
+                buffers = null;
             }
         }
 
@@ -194,9 +207,8 @@ namespace RayTracingTutorial22.RTX
 
         public AccelerationStructureBuffers CreatePrimitiveBottomLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList)
         {
-            this.LoadGLTF("Data/DamagedHelmet.glb", pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);
-            //this.LoadGLTF("Data/Box.glb", pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);
-            //this.CreatePrimitive(PrimitiveType.Sphere, pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);
+            this.LoadGLTF("GLTF/DamagedHelmet.glb", pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);
+            //this.LoadGLTF("GLTF/Box.glb", pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);            
             this.VertexBuffer = primitiveVertexBuffer;
             this.VertexCount = primitiveVertexCount;
             this.IndexBuffer = primitiveIndexBuffer;
