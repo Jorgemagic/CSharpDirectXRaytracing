@@ -84,7 +84,7 @@ namespace RayTracingTutorial22
             }
 
             // Create main window.
-            MainWindow = new Window("Vortice Tutorial 22 - GLTF Model", 1280, 720);
+            MainWindow = new Window("Vortice Tutorial 22 - Load GLTF Model", 1280, 720);
         }
 
         private void PlatformRun()

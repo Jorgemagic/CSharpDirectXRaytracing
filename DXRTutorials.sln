@@ -43,7 +43,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "20-Scene", "20-Scene\20-Sce
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "21-Scene-PerInstanceConstantBuffer", "21-Scene-PerInstanceConstantBuffer\21-Scene-PerInstanceConstantBuffer.csproj", "{B97D77A1-45BA-491C-BEEE-BE3A440D96C2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "22-GLTFModel", "22-GLTFModel\22-GLTFModel.csproj", "{4AB913A7-FDD6-415E-8863-849FEA556774}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "22-LoadModel", "22-LoadModel\22-LoadModel.csproj", "{4AB913A7-FDD6-415E-8863-849FEA556774}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
