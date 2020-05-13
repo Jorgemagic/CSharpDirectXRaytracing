@@ -290,7 +290,7 @@ namespace RayTracingTutorial22.RTX
             // The transformation matrices for the instances
             Matrix4x4[] transformation = new Matrix4x4[instances];
             transformation[0] = Matrix4x4.CreateTranslation(0, -1.0f, 0);
-            transformation[1] = Matrix4x4.CreateFromYawPitchRoll((float)rotation, (float)Math.PI / 2, (float)Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0.4f, 0) * Matrix4x4.CreateScale(1.2f);
+            transformation[1] = Matrix4x4.CreateFromYawPitchRoll((float)rotation, (float)Math.PI / 2, (float)Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0.4f, 0.5f) * Matrix4x4.CreateScale(1.5f);
 
             pInstanceDesc[0].InstanceID = 0;                          // This value will be exposed to the shader via InstanceID()
             pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
