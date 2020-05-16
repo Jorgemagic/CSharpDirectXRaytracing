@@ -104,3 +104,8 @@ How to do instancing using Raytracing pipeline. In this tutorial, we are going t
 
 How to provide a constant buffer per instance defined in the Top Level AS using the Raytracing pipeline. In this tutorial, we are going to see a mechanism to bind different resources to different instances of the same geometry. It will be useful to provide different materials for our Raytracing scenes.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/ConstantBufferPerInstance.png)
+
+### [Tutorial 22 Load Models](22-LoadModel/)
+
+How to load a Gltf model and render with DirectX12 Raytracing pipeline. Acceleration structure only stores vertex positions so you need pass Index and Vertex buffer to the shader to figure out another vertex attributes (Normals, Texcoords, etc.) when a ray hits a model's triangle.
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/GLTFModel.png)
