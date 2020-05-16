@@ -113,29 +113,29 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 			shadowPayload);
 
 		// Reflection    
-		RayDesc reflectionRay;
-		reflectionRay.Origin = hitPosition;
-		reflectionRay.Direction = reflect(WorldRayDirection(), hitNormal);
-		reflectionRay.TMin = 0.01;
-		reflectionRay.TMax = 100000;
-		RayPayload reflectionPayload;
-		reflectionPayload.recursionDepth = payload.recursionDepth + 1;
-		TraceRay(gRtScene,
-			0  /*rayFlags*/,
-			0xFF,
-			0 /* ray index*/,
-			0 /* Multiplies */,
-			0 /* Miss index (raytrace) */,
-			reflectionRay,
-			reflectionPayload);
-		float4 reflectionColor = reflectionPayload.color;
+		//RayDesc reflectionRay;
+		//reflectionRay.Origin = hitPosition;
+		//reflectionRay.Direction = reflect(WorldRayDirection(), hitNormal);
+		//reflectionRay.TMin = 0.01;
+		//reflectionRay.TMax = 100000;
+		//RayPayload reflectionPayload;
+		//reflectionPayload.recursionDepth = payload.recursionDepth + 1;
+		//TraceRay(gRtScene,
+		//	0  /*rayFlags*/,
+		//	0xFF,
+		//	0 /* ray index*/,
+		//	0 /* Multiplies */,
+		//	0 /* Miss index (raytrace) */,
+		//	reflectionRay,
+		//	reflectionPayload);
+		//float4 reflectionColor = reflectionPayload.color;
 
-		float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, diffuseColor);
-		float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
+		//float3 fresnelR = FresnelReflectanceSchlick(WorldRayDirection(), hitNormal, diffuseColor);
+		//float4 reflectedColor = reflectanceCoef * float4(fresnelR, 1) * reflectionColor;
 
 		// Calculate final color.
 		float4 phongColor = CalculatePhongLighting(diffuseColor, hitNormal, shadowPayload.hit, diffuseCoef, specularCoef, specularPower);
-		color = phongColor +reflectedColor;
+		color = phongColor; // +reflectedColor;
 	}
 	else
 	{

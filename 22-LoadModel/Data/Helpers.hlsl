@@ -1,9 +1,9 @@
-﻿static const float3 cameraPosition = float3(0, 0, -2.6);
+﻿static const float3 cameraPosition = float3(0, 0, -2.0);
 static const float4 backgroundColor = float4(0.4, 0.6, 0.2, 1.0);
-static const float4 lightAmbientColor = float4(0.1f, 0.1f, 0.1f, 1.0);
+static const float4 lightAmbientColor = float4(0.2, 0.2, 0.2, 1.0);
 static const float3 lightPosition = float3(2.0, 2.0, -2.0);
 static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
-static const float4 primitiveAlbedo = float4(0.5, 0.5, 0.5, 1.0);
+static const float4 primitiveAlbedo = float4(1.0, 0.0, 0.0, 1.0);
 static const float4 groundAlbedo = float4(1.0,1.0,1.0, 1.0);
 static const float InShadowRadiance = 0.35f;
 static const uint MaxRecursionDepth = 4;
