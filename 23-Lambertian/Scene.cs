@@ -171,7 +171,7 @@ namespace RayTracingTutorial23
             subobjects[index] = missRootSignature.subobject; // 6 Miss Root Sig
 
             int missRootIndex = index++;  // 6
-            ExportAssociation missRootAssociation = new ExportAssociation(new string[] { RTPipeline.kMissShader, RTPipeline.kShadowMiss }, subobjects[missRootIndex]);
+            ExportAssociation missRootAssociation = new ExportAssociation(new string[] { RTPipeline.kMissShader }, subobjects[missRootIndex]);
             subobjects[index++] = missRootAssociation.subobject; // 7 Associate Miss Root Sig to Miss Shader
 
             // Bind the payload size to the programs
@@ -179,7 +179,7 @@ namespace RayTracingTutorial23
             subobjects[index] = shaderConfig.subObject; // 8 Shader Config;
 
             int shaderConfigIndex = index++; // 8
-            string[] shaderExports = new string[] { RTPipeline.kMissShader, RTPipeline.kClosestHitShader, RTPipeline.kRayGenShader, RTPipeline.kShadowMiss };
+            string[] shaderExports = new string[] { RTPipeline.kMissShader, RTPipeline.kClosestHitShader, RTPipeline.kRayGenShader };
             ExportAssociation configAssociation = new ExportAssociation(shaderExports, subobjects[shaderConfigIndex]);
             subobjects[index++] = configAssociation.subobject;  // 9 Associate Shader Config to Miss, CHS, RGS
 
@@ -221,7 +221,7 @@ namespace RayTracingTutorial23
             mShaderTableEntrySize = D3D12ShaderIdentifierSizeInBytes;
             mShaderTableEntrySize += 8; // the ray-gen's descriptor table
             mShaderTableEntrySize = align_to(D3D12RaytracingShaderRecordByteAlignment, mShaderTableEntrySize);
-            uint shaderTableSize = mShaderTableEntrySize * 4;
+            uint shaderTableSize = mShaderTableEntrySize * 3;
 
             // For simplicity, we create the shader.table on the upload heap. You can also create it on the default heap
             mpShaderTable = this.acs.CreateBuffer(mpDevice, shaderTableSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -244,11 +244,7 @@ namespace RayTracingTutorial23
             pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kMissShader), D3D12ShaderIdentifierSizeInBytes);
 
-            // Entry 2 - miss program
-            pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
-            Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kShadowMiss), D3D12ShaderIdentifierSizeInBytes);
-
-            // Entry 3 - hit program
+            // Entry 2 - hit program
             pData += (int)mShaderTableEntrySize; // +1 skips miss entries
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kHitGroup), D3D12ShaderIdentifierSizeInBytes);
             heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
@@ -355,10 +351,10 @@ namespace RayTracingTutorial23
             uint missOffset = 1 * mShaderTableEntrySize;
             raytraceDesc.MissShaderTable.StartAddress = mpShaderTable.GPUVirtualAddress + missOffset;
             raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 2; // Only a s single miss-entry 
+            raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize; // Only a s single miss-entry 
 
             // Hit is the third entry in the shader-table
-            uint hitOffset = 3 * mShaderTableEntrySize;
+            uint hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;

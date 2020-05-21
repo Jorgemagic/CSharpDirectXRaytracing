@@ -12,11 +12,6 @@ struct RayPayload
 	uint recursionDepth;
 };
 
-struct ShadowPayload
-{
-	bool hit;
-};
-
 
 [shader("raygeneration")]
 void rayGen()
@@ -120,10 +115,4 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	color = 0.5 * scatteredPayload.color;	
 
 	payload.color = color;
-}
-
-[shader("miss")]
-void shadowMiss(inout ShadowPayload payload)
-{
-	payload.hit = false;
 }

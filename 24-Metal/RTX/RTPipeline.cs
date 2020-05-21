@@ -76,13 +76,12 @@ namespace RayTracingTutorial24.RTX
         public static string kMissShader = "miss";
         public static string kClosestHitShader = "chs";
         public static string kHitGroup = "HitGroup";
-        public static string kShadowMiss = "shadowMiss";
 
         public DxilLibrary CreateDxilLibrary()
         {
             // Compile the shader
             IDxcBlob pDxilLib = this.CompileLibrary("Data/Shaders.hlsl", new DxcShaderModel(6, 3));
-            string[] entryPoints = new string[] { kRayGenShader, kMissShader, kClosestHitShader, kShadowMiss };
+            string[] entryPoints = new string[] { kRayGenShader, kMissShader, kClosestHitShader };
             return new DxilLibrary(pDxilLib, entryPoints);
         }
     }
