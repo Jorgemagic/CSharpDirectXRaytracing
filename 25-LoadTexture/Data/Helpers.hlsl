@@ -10,7 +10,7 @@ static const uint MaxRecursionDepth = 4;
 static const float diffuseCoef = 0.9;
 static const float specularCoef = 0.7;
 static const float specularPower = 50;
-static const float reflectanceCoef = 0.7;
+static const float reflectanceCoef = 0.2;
 
 struct VertexPositionNormalTangentTexture
 {
