@@ -73,14 +73,14 @@ namespace RayTracingTutorial25.RTX
               // Samplers
               new[]
                 {
-                        new StaticSamplerDescription(ShaderVisibility.All, 0, 0)
-                        {
-                            Filter = Filter.MinimumMinMagMipPoint,
-                            AddressU = TextureAddressMode.Wrap,
-                            AddressV = TextureAddressMode.Wrap,
-                            AddressW = TextureAddressMode.Wrap,                            
-                        }
+                    new StaticSamplerDescription(ShaderVisibility.All, 0, 0)
+                    {
+                        Filter = Filter.MinMagMipLinear,
+                        AddressU = TextureAddressMode.Wrap,
+                        AddressV = TextureAddressMode.Wrap,
+                        AddressW = TextureAddressMode.Wrap,                            
                     }
+                }
               );
 
             return desc;            
