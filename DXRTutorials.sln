@@ -45,11 +45,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "21-Scene-PerInstanceConstan
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "22-LoadModel", "22-LoadModel\22-LoadModel.csproj", "{4AB913A7-FDD6-415E-8863-849FEA556774}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "23-Lambertian", "23-Lambertian\23-Lambertian.csproj", "{9299843E-5C98-4D10-9F07-689082771F6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lambertian", "Lambertian\Lambertian.csproj", "{9299843E-5C98-4D10-9F07-689082771F6D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "24-Metal", "24-Metal\24-Metal.csproj", "{351A193B-348D-4D23-BED4-265E99694C69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metal", "Metal\Metal.csproj", "{351A193B-348D-4D23-BED4-265E99694C69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "25-LoadTexture", "25-LoadTexture\25-LoadTexture.csproj", "{8B3E3355-6227-4C66-924D-45FA86561842}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "23-LoadTexture", "23-LoadTexture\23-LoadTexture.csproj", "{8B3E3355-6227-4C66-924D-45FA86561842}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

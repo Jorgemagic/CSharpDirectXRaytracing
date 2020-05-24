@@ -109,3 +109,9 @@ How to provide a constant buffer per instance defined in the Top Level AS using 
 
 How to load a Gltf model and render with DirectX12 Raytracing pipeline. Acceleration structure only stores vertex positions so you need pass Index and Vertex buffer to the shader to figure out another vertex attributes (Normals, Texcoords, etc.) when a ray hits a model's triangle.
 ![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/GLTFModel.png)
+
+
+### [Tutorial 23 Load Textures](23-LoadTexture/)
+
+How to load a texture and applyied our gltf model with DirectX12 Raytracing pipeline. Acceleration structure only stores vertex positions so you need pass Index and Vertex buffer to the shader to figure out another vertex attributes (Normals, Texcoords, etc.) when a ray hits a model's triangle.
+![alt Primitives](https://github.com/Jorgemagic/CSharpDirectXRaytracing/blob/master/Screenshots/LoadTextures.png)
