@@ -12,25 +12,25 @@ struct RayPayload
 	uint recursionDepth;
 };
 
-
 [shader("raygeneration")]
 void rayGen()
 {
-	uint3 launchIndex = DispatchRaysIndex();
-	uint3 launchDim = DispatchRaysDimensions();
+	float2 xy = DispatchRaysIndex().xy + 0.5f; // center in the middle of the pixel.
+	float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
 
-	float2 crd = float2(launchIndex.xy);
-	float2 dims = float2(launchDim.xy);
+	// Invert Y for DirectX-style coordinates.
+	screenPos.y = -screenPos.y;
 
-	float2 d = ((crd / dims) * 2.f - 1.f);
-	float aspectRatio = dims.x / dims.y;
+	// Unproject the pixel coordinate into a ray.	
+	float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
+	world.xyz /= world.w;
 
 	RayDesc ray;
-	ray.Origin = cameraPosition;
-	ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
+	ray.Origin = cameraPosition.xyz;
+	ray.Direction = normalize(world.xyz - ray.Origin);
 
 	ray.TMin = 0;
-	ray.TMax = 100000;
+	ray.TMax = 1000;
 
 	RayPayload payload;
 	payload.recursionDepth = 0;
@@ -43,18 +43,13 @@ void rayGen()
 		ray,
 		payload);
 
-	gOutput[launchIndex.xy] = linearToSrgb(payload.color);
+	gOutput[xy] = linearToSrgb(payload.color);
 }
 
 [shader("miss")]
 void miss(inout RayPayload payload)
 {
-	float4 gradientStart = float4(1.0, 1.0, 1.0, 1.0);
-	float4 gradientEnd = float4(0.5, 0.7, 1.0, 1.0);
-
-	float3 unitDir = normalize(WorldRayDirection());
-	float t = 0.5 * (unitDir.y + 1.0);
-	payload.color = (1.0 - t) * gradientStart + t * gradientEnd;  // blendedValue = (1 - t) * startValue + t * endValue
+	payload.color = backgroundColor;
 }
 
 float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttributes attr)
@@ -91,29 +86,13 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		Vertices[indices[2]].Normal
 	};
 
-	float3 hitNormal = HitAttribute(vertexNormals, attribs);
+	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
 
 	float4 color;
-	float4 diffuseColor = primitiveAlbedo;
-
-	// Lambertian
-	RayDesc scatteredRay;
-	scatteredRay.Origin = hitPosition;
-	//scatteredRay.Direction = hitPosition + Random_in_hemisphere(hitNormal);
-	scatteredRay.Direction = hitNormal + RandomUnitVector();
-	scatteredRay.TMin = 0.01;
-	scatteredRay.TMax = 100000;
-	RayPayload scatteredPayload;
-	scatteredPayload.recursionDepth = payload.recursionDepth + 1;
-	TraceRay(gRtScene,
-		0  /*rayFlags*/,
-		0xFF,
-		0 /* ray index*/,
-		0 /* Multiplies */,
-		0 /* Miss index (raytrace) */,
-		scatteredRay,
-		scatteredPayload);
-	color = 0.5 * scatteredPayload.color;	
+	if (payload.recursionDepth < MaxRecursionDepth)
+	{			
+		color = CalculatePhongLighting(diffuseColor, hitNormal, false, diffuseCoef, specularCoef, specularPower);
+	}
 
 	payload.color = color;
 }

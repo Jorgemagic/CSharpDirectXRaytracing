@@ -1,4 +1,4 @@
-﻿static const float3 cameraPosition = float3(0, 0, -2.6);
+﻿static const float3 cameraPosition = float3(0, 0, -2);
 static const float4 backgroundColor = float4(0.4, 0.6, 0.2, 1.0);
 static const float4 lightAmbientColor = float4(0.1f, 0.1f, 0.1f, 1.0);
 static const float3 lightPosition = float3(2.0, 2.0, -2.0);
@@ -150,4 +150,13 @@ float3 RandomUnitVector()
 	float z = RandomFloat(-1, 1);
 	float r = sqrt(1 - z * z);
 	return float3(r * cos(a), r * sin(a), z);
+}
+
+float3 Random_in_hemisphere(float3 normal)
+{
+	float3 in_unit_sphere = RandomUnitVector();
+	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+		return in_unit_sphere;
+	else
+		return -in_unit_sphere;
 }

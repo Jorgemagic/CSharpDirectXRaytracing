@@ -1,16 +1,23 @@
-﻿static const float3 cameraPosition = float3(0, 0, -2.6);
-static const float4 backgroundColor = float4(0.4, 0.6, 0.2, 1.0);
-static const float4 lightAmbientColor = float4(0.1f, 0.1f, 0.1f, 1.0);
-static const float3 lightPosition = float3(2.0, 2.0, -2.0);
-static const float4 lightDiffuseColor = float4(0.2, 0.2, 0.2, 1.0);
-static const float4 primitiveAlbedo = float4(0.8, 0.0, 0.0, 1.0);
-static const float4 groundAlbedo = float4(1.0, 1.0, 1.0, 1.0);
-static const float InShadowRadiance = 0.35f;
-static const uint MaxRecursionDepth = 4;
-static const float diffuseCoef = 0.9;
-static const float specularCoef = 0.7;
-static const float specularPower = 50;
-static const float reflectanceCoef = 0.9;
+﻿cbuffer SceneCB : register(b0)
+{
+	float4x4 projectionToWorld		: packoffset(c0);
+	float4 backgroundColor			: packoffset(c4);
+	float3 cameraPosition			: packoffset(c5);
+	float MaxRecursionDepth : packoffset(c5.w);
+	float3 lightPosition			: packoffset(c6);
+	float4 lightAmbientColor		: packoffset(c7);
+	float4 lightDiffuseColor		: packoffset(c8);
+};
+
+cbuffer PrimitiveCB : register(b1)
+{
+	float4 diffuseColor		: packoffset(c0);
+	float InShadowRadiance	: packoffset(c1.x);
+	float diffuseCoef		: packoffset(c1.y);
+	float specularCoef		: packoffset(c1.z);
+	float specularPower		: packoffset(c1.w);
+	float reflectanceCoef	: packoffset(c2.x);
+}
 
 struct VertexPositionNormalTangentTexture
 {
@@ -119,40 +126,4 @@ uint3 Load3x16BitIndices(ByteAddressBuffer Indices, uint offsetBytes)
 	}
 
 	return indices;
-}
-
-uint wang_hash(uint seed)
-{
-	seed = (seed ^ 61) ^ (seed >> 16);
-	seed *= 9;
-	seed = seed ^ (seed >> 4);
-	seed *= 0x27d4eb2d;
-	seed = seed ^ (seed >> 15);
-	return seed;
-}
-
-// Generate a random float in [0, 1)... 
-float randFloat()
-{
-	uint3 index = DispatchRaysIndex();	
-	return wang_hash(index.x * index.y) * (1.0 / 4294967296.0);
-}
-
-float randFloat(uint seed)
-{
-	return wang_hash(seed) * (1.0 / 4294967296.0);
-}
-
-float RandomFloat(uint seed, float min, float max)
-{
-	return randFloat(seed) * (max - min) + min;
-}
-
-static const float PI = 3.14159265f;
-float3 RandomUnitVector(uint seed)
-{
-	float a = RandomFloat(seed, 0, 2.0 * PI);
-	float z = RandomFloat(seed, -1, 1);
-	float r = sqrt(1 - z * z);
-	return float3(r * cos(a), r * sin(a), z);
 }

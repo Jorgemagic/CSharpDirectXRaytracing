@@ -1,6 +1,6 @@
-﻿using RayTracingTutorial24.RTX;
-using RayTracingTutorial24.RTX.Structs;
-using RayTracingTutorial24.Structs;
+﻿using SceneLambertian.RTX;
+using SceneLambertian.RTX.Structs;
+using SceneLambertian.Structs;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,7 +10,7 @@ using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace RayTracingTutorial24
+namespace SceneLambertian
 {
     public class Scene
     {
@@ -40,9 +40,13 @@ namespace RayTracingTutorial24
         private ID3D12Resource mpShaderTable;
         private uint mShaderTableEntrySize;
 
+        private ID3D12Resource sceneCB;
+        private ID3D12Resource[] primitivesCB;
+
         private long mTlasSize = 0;
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
+        private CpuDescriptorHandle sceneCBVHandle;
 
         public Scene(Window window)
         {
@@ -60,6 +64,8 @@ namespace RayTracingTutorial24
 
             // ShaderResources Tutorial 06. Need to do this before initializing the shader-table
             this.CreateShaderResources();
+
+            this.CreateConstantBuffer();
 
             // ShaderTable Tutorial 05
             this.CreateShaderTable();
@@ -166,8 +172,7 @@ namespace RayTracingTutorial24
             subobjects[index++] = hitRootAssociation.subobject; // 6 Associate Hit Root Sig to Hit Group
 
             // Create the miss root-signature and association
-            RootSignatureDescription emptyDesc = new RootSignatureDescription(RootSignatureFlags.LocalRootSignature);
-            Structs.LocalRootSignature missRootSignature = new Structs.LocalRootSignature(mpDevice, emptyDesc);
+            Structs.LocalRootSignature missRootSignature = new Structs.LocalRootSignature(mpDevice, rtpipeline.CreateMissRootDesc());
             subobjects[index] = missRootSignature.subobject; // 6 Miss Root Sig
 
             int missRootIndex = index++;  // 6
@@ -175,7 +180,7 @@ namespace RayTracingTutorial24
             subobjects[index++] = missRootAssociation.subobject; // 7 Associate Miss Root Sig to Miss Shader
 
             // Bind the payload size to the programs
-            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * (4 + 1 + 1)); //MaxPayloadSize float4 + uint
+            ShaderConfig shaderConfig = new ShaderConfig(sizeof(float) * 2, sizeof(float) * (4 + 1)); //MaxPayloadSize float4 + uint
             subobjects[index] = shaderConfig.subObject; // 8 Shader Config;
 
             int shaderConfigIndex = index++; // 8
@@ -184,7 +189,7 @@ namespace RayTracingTutorial24
             subobjects[index++] = configAssociation.subobject;  // 9 Associate Shader Config to Miss, CHS, RGS
 
             // Create the pipeline config
-            PipelineConfig config = new PipelineConfig(4 + 1 + 1);
+            PipelineConfig config = new PipelineConfig(4 + 1);
             subobjects[index++] = config.suboject; // 10
 
             // Create the global root signature and store the empty signature
@@ -212,6 +217,8 @@ namespace RayTracingTutorial24
                 Entry 0 - Ray-gen program
                 Entry 1 - Miss program
                 Entry 2 - Hit program
+                Entry 3 - Hit program
+                Entry 4 - Hit program
                 All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
                 The ray-gen program requires the largest entry - sizeof(program identifier) + 8 bytes for a descriptor-table.
                 The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
@@ -221,7 +228,7 @@ namespace RayTracingTutorial24
             mShaderTableEntrySize = D3D12ShaderIdentifierSizeInBytes;
             mShaderTableEntrySize += 8; // the ray-gen's descriptor table
             mShaderTableEntrySize = align_to(D3D12RaytracingShaderRecordByteAlignment, mShaderTableEntrySize);
-            uint shaderTableSize = mShaderTableEntrySize * 4;
+            uint shaderTableSize = mShaderTableEntrySize * 5;
 
             // For simplicity, we create the shader.table on the upload heap. You can also create it on the default heap
             mpShaderTable = this.acs.CreateBuffer(mpDevice, shaderTableSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -235,6 +242,7 @@ namespace RayTracingTutorial24
 
             // Entry 0 - ray-gen program ID and descriptor data
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kRayGenShader), D3D12ShaderIdentifierSizeInBytes);
+
             ulong heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
             Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);
 
@@ -244,11 +252,17 @@ namespace RayTracingTutorial24
             pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kMissShader), D3D12ShaderIdentifierSizeInBytes);
 
-            // Entry 2 - miss program
-            pData += (int)mShaderTableEntrySize; // +1 skips miss entries
-            Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kHitGroup), D3D12ShaderIdentifierSizeInBytes);
-            heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
-            Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);
+            // Entry 2-4 - hit program
+            //heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;                
+            for (int i = 0; i < 6; i++)
+            {
+                pData += (int)mShaderTableEntrySize; // +1 skips miss entries
+                Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kHitGroup), D3D12ShaderIdentifierSizeInBytes);
+
+                Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);
+
+                Unsafe.Write<ulong>((pData + (int)(D3D12ShaderIdentifierSizeInBytes + sizeof(ulong))).ToPointer(), (ulong)primitivesCB[i].GPUVirtualAddress);
+            }
 
             // Unmap
             mpShaderTable.Unmap(0, null);
@@ -269,8 +283,8 @@ namespace RayTracingTutorial24
             resDesc.Width = mSwapChainRect.Width;
             mpOutputResource = mpDevice.CreateCommittedResource(AccelerationStructures.kDefaultHeapProps, HeapFlags.None, resDesc, ResourceStates.CopySource, null);  // Starting as copy-source to simplify onFrameRender()
 
-            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 4 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer
-            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 4, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
+            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 5 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer, 1 primitiveConstantBuffer
+            mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 5, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
 
             // Create the UAV. Based on the root signature we created it should be the first entry
             UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription();
@@ -321,6 +335,113 @@ namespace RayTracingTutorial24
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             vertexSRVHandle = srvHandle;
             mpDevice.CreateShaderResourceView(this.acs.VertexBuffer, vertexSRVDesc, vertexSRVHandle);
+
+            // CB Scene
+            Vector3 cameraPosition = new Vector3(0, 1, -7);
+            Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
+            Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
+            Matrix4x4 viewProj = Matrix4x4.Multiply(view, proj);
+            Matrix4x4.Invert(viewProj, out Matrix4x4 projectionToWorld);
+            SceneConstantBuffer sceneConstantBuffer = new SceneConstantBuffer()
+            {
+                projectionToWorld = Matrix4x4.Transpose(projectionToWorld),
+                cameraPosition = cameraPosition,
+                lightPosition = new Vector3(0.0f, 1.0f, -2.0f),
+                lightDiffuseColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
+                lightAmbientColor = new Vector4(0.1f, 0.1f, 0.1f, 1.0f),
+                backgroundColor = new Vector4(0.2f, 0.21f, 0.9f, 1.0f),
+                MaxRecursionDepth = 4,
+            };
+
+            sceneCB = this.acs.CreateBuffer(mpDevice, (uint)Unsafe.SizeOf<SceneConstantBuffer>(), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
+            IntPtr pData;
+            pData = sceneCB.Map(0, null);
+            Helpers.MemCpy(pData, sceneConstantBuffer, (uint)Unsafe.SizeOf<SceneConstantBuffer>());
+            sceneCB.Unmap(0, null);
+
+            var sceneCBV = new ConstantBufferViewDescription()
+            {
+                BufferLocation = sceneCB.GPUVirtualAddress,
+                SizeInBytes = (Unsafe.SizeOf<SceneConstantBuffer>() + 255) & ~255,
+            };
+
+            srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+            sceneCBVHandle = srvHandle;
+            mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);           
+        }
+       
+        public unsafe void CreateConstantBuffer()
+        {
+            int instances = 6;
+            PrimitiveConstantBuffer[] primitiveConstantBuffer = new PrimitiveConstantBuffer[instances];
+            primitiveConstantBuffer[0] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.9f, 0.9f, 0.9f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.9f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+            primitiveConstantBuffer[1] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.6f, 0.1f, 0.1f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.1f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+            primitiveConstantBuffer[2] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.2f, 0.6f, 0.2f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.1f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+            primitiveConstantBuffer[3] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.6f, 0.2f, 0.6f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.1f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+            primitiveConstantBuffer[4] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.6f, 0.6f, 0f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.1f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+            primitiveConstantBuffer[5] = new PrimitiveConstantBuffer()
+            {
+                diffuseColor = new Vector4(0.0f, 0.6f, 0.6f, 1.0f),
+                inShadowRadiance = 0.35f,
+                diffuseCoef = 0.1f,
+                specularCoef = 0.7f,
+                specularPower = 50,
+                reflectanceCoef = 0.7f,
+            };
+
+            this.primitivesCB = new ID3D12Resource[instances];
+            for (int i = 0; i < this.primitivesCB.Length; i++)
+            {
+                uint bufferSize = (uint)Unsafe.SizeOf<PrimitiveConstantBuffer>();
+                this.primitivesCB[i] = this.acs.CreateBuffer(mpDevice, bufferSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
+                IntPtr pData;
+                pData = this.primitivesCB[i].Map(0, null);
+                fixed (void* pSource = &primitiveConstantBuffer[i])
+                {
+                    Unsafe.CopyBlock((void*)pData, pSource, bufferSize);
+                }                
+                this.primitivesCB[i].Unmap(0, null);
+            }
         }
 
         private int BeginFrame()
@@ -357,7 +478,7 @@ namespace RayTracingTutorial24
             uint hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 6;
 
             // Bind the empty root signature
             mpCmdList.SetComputeRootSignature(mpEmptyRootSig);

@@ -1,16 +1,14 @@
-﻿using glTFLoader;
-using RayTracingTutorial23.RTX.Structs;
-using RayTracingTutorial23.Structs;
+﻿using SceneLambertian.RTX.Structs;
+using SceneLambertian.Structs;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 
-namespace RayTracingTutorial23.RTX
+namespace SceneLambertian.RTX
 {
     public class AccelerationStructures
     {
@@ -66,7 +64,7 @@ namespace RayTracingTutorial23.RTX
                     Primitives.Plane(3.0f, out vertexList, out indexList);
                     break;
                 case PrimitiveType.Quad:
-                    Primitives.Quad(100, out vertexList, out indexList);
+                    Primitives.Quad(200, out vertexList, out indexList);
                     break;
                 case PrimitiveType.Pyramid:
                     Primitives.Pyramid(1.5f, out vertexList, out indexList);
@@ -98,7 +96,7 @@ namespace RayTracingTutorial23.RTX
 
         public AccelerationStructureBuffers CreatePlaneBottomLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList)
         {
-            this.CreatePrimitive(PrimitiveType.Sphere, pDevice, out ID3D12Resource planeVertexBuffer, out uint planeVertexCount, out ID3D12Resource planeIndexBuffer, out uint planeIndexCount);
+            this.CreatePrimitive(PrimitiveType.Quad, pDevice, out ID3D12Resource planeVertexBuffer, out uint planeVertexCount, out ID3D12Resource planeIndexBuffer, out uint planeIndexCount);
             return this.CreateBottomLevelAS(pDevice, pCmdList, planeVertexBuffer, planeVertexCount, planeIndexBuffer, planeIndexCount);
         }
 
@@ -165,7 +163,7 @@ namespace RayTracingTutorial23.RTX
 
         public unsafe AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList, AccelerationStructureBuffers[] pBottomLevelAS, ref long tlasSize)
         {
-            int instances = 2;
+            int instances = 6;
 
             // First, get the size of the TLAS buffers and create them
             BuildRaytracingAccelerationStructureInputs inputs = new BuildRaytracingAccelerationStructureInputs();
@@ -189,8 +187,12 @@ namespace RayTracingTutorial23.RTX
 
             // The transformation matrices for the instances
             Matrix4x4[] transformation = new Matrix4x4[instances];
-            transformation[0] = Matrix4x4.CreateScale(100) * Matrix4x4.CreateTranslation(new Vector3(0, -50.5f, -1));
-            transformation[1] = Matrix4x4.CreateScale(1.0f) * Matrix4x4.CreateTranslation(0, 0, -1);
+            transformation[0] = Matrix4x4.CreateTranslation(new Vector3(0, -0.5f, 0));
+            transformation[1] = Matrix4x4.Identity;
+            transformation[2] = Matrix4x4.CreateScale(2.5f) * Matrix4x4.CreateTranslation(new Vector3(-2, 0.7f, 0));
+            transformation[3] = Matrix4x4.CreateScale(1.9f) * Matrix4x4.CreateTranslation(new Vector3(2, 0.4f, 0));
+            transformation[4] = Matrix4x4.CreateScale(0.6f) * Matrix4x4.CreateTranslation(new Vector3(-1, -0.2f, -3));
+            transformation[5] = Matrix4x4.CreateScale(0.4f) * Matrix4x4.CreateTranslation(new Vector3(1, -0.3f, -3));
 
             pInstanceDesc[0].InstanceID = 0;                          // This value will be exposed to the shader via InstanceID()
             pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
@@ -202,7 +204,7 @@ namespace RayTracingTutorial23.RTX
             for (int i = 1; i < instances; i++)
             {
                 pInstanceDesc[i].InstanceID = i;                          // This value will be exposed to the shader via InstanceID()
-                pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
+                pInstanceDesc[i].InstanceContributionToHitGroupIndex = i; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
                 pInstanceDesc[i].Flags = (byte)RaytracingInstanceFlags.None;
                 pInstanceDesc[i].Transform = Matrix4x4.Transpose(transformation[i]).ToMatrix3x4(); // GLM is column major, the INSTANCE_DESC  is row major
                 pInstanceDesc[i].AccelerationStructure = pBottomLevelAS[1].pResult.GPUVirtualAddress;

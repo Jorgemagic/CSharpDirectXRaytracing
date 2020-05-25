@@ -9,6 +9,7 @@ StructuredBuffer<VertexPositionNormalTangentTexture> Vertices : register(t2);
 struct RayPayload
 {
 	float4 color;
+	uint samples;
 	uint recursionDepth;
 };
 
@@ -22,28 +23,47 @@ void rayGen()
 	float2 crd = float2(launchIndex.xy);
 	float2 dims = float2(launchDim.xy);
 
-	float2 d = ((crd / dims) * 2.f - 1.f);
 	float aspectRatio = dims.x / dims.y;
+	float VerticalFoVRadians = 20;
 
+	float4 pixelColor = float4(0, 0, 0, 0);
+	int samplesPerPixel = 10;
 	RayDesc ray;
 	ray.Origin = cameraPosition;
-	ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
-
 	ray.TMin = 0;
 	ray.TMax = 10000;
 
-	RayPayload payload;
-	payload.recursionDepth = 0;
-	TraceRay(gRtScene,
-		0 /*rayFlags*/,
-		0xFF,
-		0 /* ray index*/,
-		0 /* Multiplies */,
-		0 /* Miss index */,
-		ray,
-		payload);
+	for (uint s = 0; s < samplesPerPixel; ++s)
+	{
+		uint seed = launchIndex.x * launchIndex.y * s;
 
-	gOutput[launchIndex.xy] = linearToSrgb(payload.color);
+		float2 offset;
+		offset.x = 0.5 * randFloat(seed + 1) + 0.5;
+		offset.y = 0.5 * randFloat(seed + 2) + 0.5;
+
+		float2 d;
+		d.x = ((((float)launchIndex.x + offset.x) / (float)launchDim.x) * 2.0 - 1.0) * ((float)launchDim.x / (float)launchDim.y) * (tan(VerticalFoVRadians / 2.0));
+		d.y = -((((float)launchIndex.y + offset.y) / (float)launchDim.y) * 2.0 - 1.0) * (tan(VerticalFoVRadians / 2.0));
+
+		ray.Direction = normalize(float3(d.x, d.y, 1));
+
+		RayPayload payload;
+		payload.samples = s;
+		payload.recursionDepth = 0;
+
+		TraceRay(gRtScene,
+			0 /*rayFlags*/,
+			0xFF,
+			0 /* ray index*/,
+			0 /* Multiplies */,
+			0 /* Miss index */,
+			ray,
+			payload);
+
+		pixelColor += linearToSrgb(payload.color);
+	}
+
+	gOutput[launchIndex.xy] = float4(pixelColor.x / samplesPerPixel, pixelColor.y / samplesPerPixel, pixelColor.z / samplesPerPixel, 1.0);
 }
 
 [shader("miss")]
@@ -97,21 +117,24 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	float4 diffuseColor = (InstanceID() == 0) ? groundAlbedo : primitiveAlbedo;
 
 	// Lambertian
+	uint3 launchIndex = DispatchRaysIndex();
+	uint seed = launchIndex.x * launchIndex.y * payload.samples * payload.recursionDepth;
+
 	RayDesc scatteredRay;
 	scatteredRay.Origin = hitPosition;
 
 	uint instance = InstanceID();
 	if (instance == 0 || instance == 1)
 	{
-		scatteredRay.Direction = hitNormal + RandomUnitVector();
+		scatteredRay.Direction = hitNormal + RandomUnitVector(seed);
 	}
 	else if (instance == 2)
 	{
-		scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 1.0 * RandomUnitVector();
+		scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 1.0 * RandomUnitVector(seed);
 	}
 	else
 	{
-		scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 0.3 * RandomUnitVector();
+		scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 0.3 * RandomUnitVector(seed);
 	}
 	scatteredRay.TMin = 0.01;
 	scatteredRay.TMax = 100;
@@ -128,11 +151,11 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	if (instance == 0)
 	{
-		color = float4(0.8,0.8,0,1) * scatteredPayload.color;
+		color = float4(0.8, 0.8, 0, 1) * scatteredPayload.color;
 	}
 	else if (instance == 1)
 	{
-		color = float4(0.7,0.3,0.3,1) * scatteredPayload.color;
+		color = float4(0.7, 0.3, 0.3, 1) * scatteredPayload.color;
 	}
 	else if (instance == 2)
 	{
@@ -140,8 +163,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 	}
 	else if (instance == 3)
 	{
-		color = float4(0.8, 0.8, 0.8, 1) * scatteredPayload.color;		
-	}	
+		color = float4(0.8, 0.8, 0.8, 1) * scatteredPayload.color;
+	}
 
 	payload.color = color;
 }
