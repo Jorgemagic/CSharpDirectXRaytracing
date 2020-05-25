@@ -49,7 +49,12 @@ void rayGen()
 [shader("miss")]
 void miss(inout RayPayload payload)
 {
-	payload.color = backgroundColor;
+	float4 gradientStart = float4(1.0, 1.0, 1.0, 1.0);
+	float4 gradientEnd = float4(0.5, 0.7, 1.0, 1.0);
+
+	float3 unitDir = normalize(WorldRayDirection());
+	float t = 0.5 * (unitDir.y + 1.0);
+	payload.color = (1.0 - t) * gradientStart + t * gradientEnd;  // blendedValue = (1 - t) * startValue + t * endValue
 }
 
 float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttributes attr)
@@ -86,12 +91,35 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		Vertices[indices[2]].Normal
 	};
 
-	float3 hitNormal = (InstanceID() == 0) ? float3(0, 1, 0) : HitAttribute(vertexNormals, attribs);
+	float3 hitNormal = HitAttribute(vertexNormals, attribs);
 
 	float4 color;
 	if (payload.recursionDepth < MaxRecursionDepth)
 	{			
-		color = CalculatePhongLighting(diffuseColor, hitNormal, false, diffuseCoef, specularCoef, specularPower);
+		RayDesc scatteredRay;
+		scatteredRay.Origin = hitPosition;
+		if (materialType == 0)
+		{
+			//scatteredRay.Direction = hitPosition + Random_in_hemisphere(hitNormal);
+			scatteredRay.Direction = hitNormal + RandomUnitVector();
+		}
+		else
+		{
+			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 0.0 * RandomUnitVector();
+		}
+		scatteredRay.TMin = 0.01;
+		scatteredRay.TMax = 100000;
+		RayPayload scatteredPayload;
+		scatteredPayload.recursionDepth = payload.recursionDepth + 1;
+		TraceRay(gRtScene,
+			0  /*rayFlags*/,
+			0xFF,
+			0 /* ray index*/,
+			0 /* Multiplies */,
+			0 /* Miss index (raytrace) */,
+			scatteredRay,
+			scatteredPayload);
+		color = diffuseColor * scatteredPayload.color;
 	}
 
 	payload.color = color;

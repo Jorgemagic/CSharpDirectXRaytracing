@@ -115,9 +115,8 @@ namespace SceneLambertian
         {
             acs = new AccelerationStructures();
 
-            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[2];
-            bottomLevelBuffers[0] = acs.CreatePlaneBottomLevelAS(mpDevice, mpCmdList);
-            bottomLevelBuffers[1] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
+            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[1];            
+            bottomLevelBuffers[0] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
 
             AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers, ref mTlasSize);
 
@@ -242,7 +241,6 @@ namespace SceneLambertian
 
             // Entry 0 - ray-gen program ID and descriptor data
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kRayGenShader), D3D12ShaderIdentifierSizeInBytes);
-
             ulong heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;
             Unsafe.Write<ulong>((pData + (int)D3D12ShaderIdentifierSizeInBytes).ToPointer(), heapStart);
 
@@ -376,57 +374,35 @@ namespace SceneLambertian
             PrimitiveConstantBuffer[] primitiveConstantBuffer = new PrimitiveConstantBuffer[instances];
             primitiveConstantBuffer[0] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(0.9f, 0.9f, 0.9f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.9f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                diffuseColor = new Vector4(1.0f,1.0f,1.0f, 1.0f),
+                materialType = MaterialTypes.Lambertian,               
             };
             primitiveConstantBuffer[1] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.6f, 0.1f, 0.1f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.1f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                materialType = MaterialTypes.Lambertian,
             };
             primitiveConstantBuffer[2] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.2f, 0.6f, 0.2f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.1f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                materialType = MaterialTypes.Metal,
+                fuzz = 1.0f
             };
             primitiveConstantBuffer[3] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.6f, 0.2f, 0.6f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.1f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                materialType = MaterialTypes.Metal,
+                fuzz = 0.3f,
             };
             primitiveConstantBuffer[4] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.6f, 0.6f, 0f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.1f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                materialType = MaterialTypes.Lambertian
             };
             primitiveConstantBuffer[5] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.0f, 0.6f, 0.6f, 1.0f),
-                inShadowRadiance = 0.35f,
-                diffuseCoef = 0.1f,
-                specularCoef = 0.7f,
-                specularPower = 50,
-                reflectanceCoef = 0.7f,
+                materialType = MaterialTypes.Lambertian,
             };
 
             this.primitivesCB = new ID3D12Resource[instances];
@@ -478,7 +454,7 @@ namespace SceneLambertian
             uint hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 6;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
 
             // Bind the empty root signature
             mpCmdList.SetComputeRootSignature(mpEmptyRootSig);

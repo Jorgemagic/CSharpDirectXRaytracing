@@ -12,11 +12,8 @@
 cbuffer PrimitiveCB : register(b1)
 {
 	float4 diffuseColor		: packoffset(c0);
-	float InShadowRadiance	: packoffset(c1.x);
-	float diffuseCoef		: packoffset(c1.y);
-	float specularCoef		: packoffset(c1.z);
-	float specularPower		: packoffset(c1.w);
-	float reflectanceCoef	: packoffset(c2.x);
+	int materialType		: packoffset(c1.x);
+	float fuzz				: packoffset(c1.y);	
 }
 
 struct VertexPositionNormalTangentTexture
@@ -41,59 +38,6 @@ float4 linearToSrgb(float4 c)
 float3 HitWorldPosition()
 {
 	return WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
-}
-
-// Diffuse lighting calculation.
-float CalculateDiffuseCoefficient(in float3 hitPosition, in float3 incidentLightRay, in float3 normal)
-{
-	float fNDotL = saturate(dot(-incidentLightRay, normal));
-	return fNDotL;
-}
-
-// Phong lighting specular component
-float4 CalculateSpecularCoefficient(in float3 hitPosition, in float3 incidentLightRay, in float3 normal, in float specularPower)
-{
-	float3 reflectedLightRay = normalize(reflect(incidentLightRay, normal));
-	return pow(saturate(dot(reflectedLightRay, normalize(-WorldRayDirection()))), specularPower);
-}
-
-
-// Phong lighting model = ambient + diffuse + specular components.
-float4 CalculatePhongLighting(in float4 albedo, in float3 normal, in bool isInShadow, in float diffuseCoef = 1.0, in float specularCoef = 1.0, in float specularPower = 50)
-{
-	float3 hitPosition = HitWorldPosition();
-	float shadowFactor = isInShadow ? InShadowRadiance : 1.0;
-	float3 incidentLightRay = normalize(hitPosition - lightPosition);
-
-	// Diffuse component.
-	float Kd = CalculateDiffuseCoefficient(hitPosition, incidentLightRay, normal);
-	float4 diffuseColor =  shadowFactor* diffuseCoef* Kd* lightDiffuseColor* albedo;
-
-	// Specular component.
-	float4 specularColor = float4(0, 0, 0, 0);
-	if (!isInShadow)
-	{
-		float4 lightSpecularColor = float4(1, 1, 1, 1);
-		float4 Ks = CalculateSpecularCoefficient(hitPosition, incidentLightRay, normal, specularPower);
-		specularColor = specularCoef * Ks * lightSpecularColor;
-	}
-
-	// Ambient component.
-	// Fake AO: Darken faces with normal facing downwards/away from the sky a little bit.
-	float4 ambientColor = lightAmbientColor;
-	float4 ambientColorMin = lightAmbientColor - 0.15;
-	float4 ambientColorMax = lightAmbientColor;
-	float a = 1 - saturate(dot(normal, float3(0, -1, 0)));
-	ambientColor = albedo * lerp(ambientColorMin, ambientColorMax, a);
-
-	return ambientColor + diffuseColor + specularColor;
-}
-
-// Fresnel reflectance - schlick approximation.
-float3 FresnelReflectanceSchlick(in float3 I, in float3 N, in float3 f0)
-{
-	float cosi = saturate(dot(-I, N));
-	return f0 + (1 - f0) * pow(1 - cosi, 5);
 }
 
 // Load three 16 bit indices from a byte addressed buffer.
@@ -126,4 +70,44 @@ uint3 Load3x16BitIndices(ByteAddressBuffer Indices, uint offsetBytes)
 	}
 
 	return indices;
+}
+
+// Random utilities
+uint wang_hash(uint seed)
+{
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return seed;
+}
+
+float randFloat()
+{
+	uint3 index = DispatchRaysIndex();
+	return wang_hash(index.x * index.y) * (1.0 / 4294967296.0);
+}
+
+float RandomFloat(float min, float max)
+{
+	return randFloat() * (max - min) + min;
+}
+
+static const float PI = 3.14159265f;
+float3 RandomUnitVector()
+{
+	float a = RandomFloat(0, 2.0f * PI);
+	float z = RandomFloat(-1, 1);
+	float r = sqrt(1 - z * z);
+	return float3(r * cos(a), r * sin(a), z);
+}
+
+float3 Random_in_hemisphere(float3 normal)
+{
+	float3 in_unit_sphere = RandomUnitVector();
+	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+		return in_unit_sphere;
+	else
+		return -in_unit_sphere;
 }

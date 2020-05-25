@@ -94,12 +94,6 @@ namespace SceneLambertian.RTX
             indexBuffer.Unmap(0, null);
         }
 
-        public AccelerationStructureBuffers CreatePlaneBottomLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList)
-        {
-            this.CreatePrimitive(PrimitiveType.Quad, pDevice, out ID3D12Resource planeVertexBuffer, out uint planeVertexCount, out ID3D12Resource planeIndexBuffer, out uint planeIndexCount);
-            return this.CreateBottomLevelAS(pDevice, pCmdList, planeVertexBuffer, planeVertexCount, planeIndexBuffer, planeIndexCount);
-        }
-
         public AccelerationStructureBuffers CreatePrimitiveBottomLevelAS(ID3D12Device5 pDevice, ID3D12GraphicsCommandList4 pCmdList)
         {
             this.CreatePrimitive(PrimitiveType.Sphere, pDevice, out ID3D12Resource primitiveVertexBuffer, out uint primitiveVertexCount, out ID3D12Resource primitiveIndexBuffer, out uint primitiveIndexCount);
@@ -187,27 +181,20 @@ namespace SceneLambertian.RTX
 
             // The transformation matrices for the instances
             Matrix4x4[] transformation = new Matrix4x4[instances];
-            transformation[0] = Matrix4x4.CreateTranslation(new Vector3(0, -0.5f, 0));
+            transformation[0] = Matrix4x4.CreateScale(100) * Matrix4x4.CreateTranslation(new Vector3(0, -50.5f, 0));
             transformation[1] = Matrix4x4.Identity;
             transformation[2] = Matrix4x4.CreateScale(2.5f) * Matrix4x4.CreateTranslation(new Vector3(-2, 0.7f, 0));
             transformation[3] = Matrix4x4.CreateScale(1.9f) * Matrix4x4.CreateTranslation(new Vector3(2, 0.4f, 0));
-            transformation[4] = Matrix4x4.CreateScale(0.6f) * Matrix4x4.CreateTranslation(new Vector3(-1, -0.2f, -3));
-            transformation[5] = Matrix4x4.CreateScale(0.4f) * Matrix4x4.CreateTranslation(new Vector3(1, -0.3f, -3));
-
-            pInstanceDesc[0].InstanceID = 0;                          // This value will be exposed to the shader via InstanceID()
-            pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
-            pInstanceDesc[0].Flags = (byte)RaytracingInstanceFlags.None;
-            pInstanceDesc[0].Transform = Matrix4x4.Transpose(transformation[0]).ToMatrix3x4(); // GLM is column major, the INSTANCE_DESC  is row major
-            pInstanceDesc[0].AccelerationStructure = pBottomLevelAS[0].pResult.GPUVirtualAddress;
-            pInstanceDesc[0].InstanceMask = 0xff;
-
-            for (int i = 1; i < instances; i++)
+            transformation[4] = Matrix4x4.CreateScale(0.6f) * Matrix4x4.CreateTranslation(new Vector3(-1, -0.3f, -3));
+            transformation[5] = Matrix4x4.CreateScale(0.4f) * Matrix4x4.CreateTranslation(new Vector3(1, -0.4f, -3));
+            
+            for (int i = 0; i < instances; i++)
             {
                 pInstanceDesc[i].InstanceID = i;                          // This value will be exposed to the shader via InstanceID()
                 pInstanceDesc[i].InstanceContributionToHitGroupIndex = i; // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
                 pInstanceDesc[i].Flags = (byte)RaytracingInstanceFlags.None;
                 pInstanceDesc[i].Transform = Matrix4x4.Transpose(transformation[i]).ToMatrix3x4(); // GLM is column major, the INSTANCE_DESC  is row major
-                pInstanceDesc[i].AccelerationStructure = pBottomLevelAS[1].pResult.GPUVirtualAddress;
+                pInstanceDesc[i].AccelerationStructure = pBottomLevelAS[0].pResult.GPUVirtualAddress;
                 pInstanceDesc[i].InstanceMask = 0xff;
             }
 

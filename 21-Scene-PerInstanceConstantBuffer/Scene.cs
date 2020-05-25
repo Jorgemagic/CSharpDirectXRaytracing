@@ -482,7 +482,7 @@ namespace RayTracingTutorial21
             uint hitOffset = 3 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 6;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize*2;
 
             // Bind the empty root signature
             mpCmdList.SetComputeRootSignature(mpEmptyRootSig);

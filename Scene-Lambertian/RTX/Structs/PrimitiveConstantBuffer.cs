@@ -3,27 +3,23 @@ using System.Runtime.InteropServices;
 
 namespace SceneLambertian.Structs
 {
-    [StructLayout(LayoutKind.Explicit, Size = 48)]
+    public enum MaterialTypes
+    {
+        Lambertian = 0,
+        Metal = 1,
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 24)]
     public struct PrimitiveConstantBuffer
     {
         [FieldOffset(0)]
         public Vector4 diffuseColor;
 
         [FieldOffset(16)]
-        public float inShadowRadiance;
+        public MaterialTypes materialType;
         
         [FieldOffset(20)]
-        public float diffuseCoef;
-
-        [FieldOffset(24)]
-        public float specularCoef;
-
-        [FieldOffset(28)]
-        public float specularPower;
-
-        [FieldOffset(32)]
-        public float reflectanceCoef;
-        
+        public float fuzz;      
     }
 }
 
