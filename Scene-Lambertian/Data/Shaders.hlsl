@@ -17,35 +17,50 @@ struct RayPayload
 [shader("raygeneration")]
 void rayGen()
 {
-	float2 xy = DispatchRaysIndex().xy + 0.5f; // center in the middle of the pixel.
-	float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
+	uint2 index = DispatchRaysIndex().xy;
+	uint2 dims = DispatchRaysDimensions().xy;
+	float4 pixelColor = float4(0, 0, 0, 0);
 
-	// Invert Y for DirectX-style coordinates.
-	screenPos.y = -screenPos.y;
+	[unroll]
+	for (int i = 0; i < 1; i++)
+	{
+		[unroll]
+		for (int j = 0; j < 1; j++)
+		{
+			float2 xy = float2(index.xy) + float2(0.25f + 0.5f * i, 0.25f + 0.5f * j);
 
-	// Unproject the pixel coordinate into a ray.	
-	float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
-	world.xyz /= world.w;
+			float2 screenPos = xy / dims * 2.0 - 1.0;
 
-	RayDesc ray;
-	ray.Origin = cameraPosition.xyz;
-	ray.Direction = normalize(world.xyz - ray.Origin);
+			// Invert Y for DirectX-style coordinates.
+			screenPos.y = -screenPos.y;
 
-	ray.TMin = 0;
-	ray.TMax = 1000;
+			// Unproject the pixel coordinate into a ray.	
+			float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
+			world.xyz /= world.w;
 
-	RayPayload payload;
-	payload.recursionDepth = 0;
-	TraceRay(gRtScene,
-		0 /*rayFlags*/,
-		0xFF,
-		0 /* ray index*/,
-		0 /* Multiplies */,
-		0 /* Miss index */,
-		ray,
-		payload);
+			RayDesc ray;
+			ray.Origin = cameraPosition.xyz;
+			ray.Direction = normalize(world.xyz - ray.Origin);
 
-	gOutput[xy] = linearToSrgb(payload.color);
+			ray.TMin = 0;
+			ray.TMax = 1000;
+
+			RayPayload payload;
+			payload.recursionDepth = 0;
+			TraceRay(gRtScene,
+				0 /*rayFlags*/,
+				0xFF,
+				0 /* ray index*/,
+				0 /* Multiplies */,
+				0 /* Miss index */,
+				ray,
+				payload);
+
+			pixelColor += payload.color;
+		}
+	}
+
+	gOutput[index] = linearToSrgb(float4(pixelColor.xyz / 1.0f, 1.0f));
 }
 
 [shader("miss")]
@@ -66,49 +81,6 @@ float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttrib
 		attr.barycentrics.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
-// Random utilities
-uint wang_hash(uint seed)
-{
-	seed = (seed ^ 61) ^ (seed >> 16);
-	seed *= 9;
-	seed = seed ^ (seed >> 4);
-	seed *= 0x27d4eb2d;
-	seed = seed ^ (seed >> 15);
-	return seed;
-}
-
-float randFloat()
-{
-	uint3 index = DispatchRaysIndex();
-	return wang_hash(index.x * index.y) * (1.0 / 4294967296.0);
-}
-
-float RandomFloat(float min, float max)
-{
-	return randFloat() * (max - min) + min;
-	/*uint2 pixelCoords = DispatchRaysIndex().xy;
-	int index = pixelCoords.x * pixelCoords.y;
-	return Random[index] * (max - min) + min;*/
-}
-
-static const float PI = 3.14159265f;
-float3 RandomUnitVector()
-{
-	float a = RandomFloat(0, 2.0f * PI);
-	float z = RandomFloat(-1, 1);
-	float r = sqrt(1 - z * z);
-	return float3(r * cos(a), r * sin(a), z);
-}
-
-float3 Random_in_hemisphere(float3 normal)
-{
-	float3 in_unit_sphere = RandomUnitVector();
-	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
-		return in_unit_sphere;
-	else
-		return -in_unit_sphere;
-}
-
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
@@ -117,6 +89,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		payload.color = float4(0, 0, 0, 1);
 		return;
 	}
+
+	uint seed = initRand(DispatchRaysIndex().x, DispatchRaysIndex().y, 16);
 
 	float3 hitPosition = HitWorldPosition();
 
@@ -140,17 +114,17 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	float4 color;
 	if (payload.recursionDepth < MaxRecursionDepth)
-	{			
+	{
 		RayDesc scatteredRay;
 		scatteredRay.Origin = hitPosition;
 		if (materialType == 0)
 		{
 			//scatteredRay.Direction = hitPosition + Random_in_hemisphere(hitNormal);
-			scatteredRay.Direction = hitNormal + RandomUnitVector();
+			scatteredRay.Direction = hitNormal + CosineWeightedHemisphereSample(seed, hitNormal);
 		}
 		else
 		{
-			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * RandomUnitVector();
+			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * CosineWeightedHemisphereSample(seed, hitNormal);
 		}
 		scatteredRay.TMin = 0.01;
 		scatteredRay.TMax = 100000;

@@ -2,9 +2,11 @@
 using SceneLambertian.RTX.Structs;
 using SceneLambertian.Structs;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Windows.Forms;
 using Vortice.Direct3D12;
 using Vortice.Direct3D12.Debug;
 using Vortice.DXGI;
@@ -18,7 +20,7 @@ namespace SceneLambertian
         private const int kRtvHeapSize = 3;
         private Color4 clearColor = new Color4(0.4f, 0.6f, 0.2f, 1.0f);
 
-        private readonly Window Window;
+        private Form Window;
         private D3D12GraphicsContext context;
         private IntPtr mHwnd;
         private ID3D12Device5 mpDevice;
@@ -47,9 +49,12 @@ namespace SceneLambertian
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
         private CpuDescriptorHandle sceneCBVHandle;
-        private CpuDescriptorHandle randomSRVHandle;
+        //private CpuDescriptorHandle randomSRVHandle;
 
-        public Scene(Window window)
+        private long frameCounter = 0;
+        private Stopwatch stopwatch;
+
+        public Scene(Form window)
         {
             this.Window = window;
             this.context = new D3D12GraphicsContext(window.Width, window.Height);
@@ -70,6 +75,10 @@ namespace SceneLambertian
 
             // ShaderTable Tutorial 05
             this.CreateShaderTable();
+
+            frameCounter = 0;
+            stopwatch = new Stopwatch();
+            stopwatch.Start();
         }
 
         private void InitDXR(IntPtr winHandle, int winWidth, int winHeight)
@@ -460,7 +469,7 @@ namespace SceneLambertian
             return this.mpSwapChain.GetCurrentBackBufferIndex();
         }
 
-        public bool DrawFrame(Action<int, int> draw, [CallerMemberName] string frameName = null)
+        public bool DrawFrame()
         {
             int rtvIndex = BeginFrame();
 
@@ -485,7 +494,7 @@ namespace SceneLambertian
             uint hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize*7;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
 
             // Bind the empty root signature
             mpCmdList.SetComputeRootSignature(mpEmptyRootSig);
@@ -500,6 +509,17 @@ namespace SceneLambertian
             mpCmdList.CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
 
             EndFrame(rtvIndex);
+
+            // FPS
+            frameCounter++;
+
+            if (stopwatch.ElapsedMilliseconds >= 1000)
+            {
+                this.Window.Text = $"{Application.WindowsName} FPS: {frameCounter}";
+
+                frameCounter = 0;
+                stopwatch.Restart();
+            }
 
             return true;
         }

@@ -1,23 +1,21 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace SceneLambertian
 {
     class Program
-    {
-        private class RTXApplication : Application
-        {
-            public RTXApplication()
-            {
-            }
-        }
-
+    {        
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Application app = new Application();
 
-            using (var app = new RTXApplication())
+            try
             {
                 app.Run();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.StackTrace);
             }
         }
     }
