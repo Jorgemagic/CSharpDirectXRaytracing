@@ -47,6 +47,7 @@ namespace SceneLambertian
         private CpuDescriptorHandle indexSRVHandle;
         private CpuDescriptorHandle vertexSRVHandle;
         private CpuDescriptorHandle sceneCBVHandle;
+        private CpuDescriptorHandle randomSRVHandle;
 
         public Scene(Window window)
         {
@@ -115,7 +116,7 @@ namespace SceneLambertian
         {
             acs = new AccelerationStructures();
 
-            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[1];            
+            AccelerationStructureBuffers[] bottomLevelBuffers = new AccelerationStructureBuffers[1];
             bottomLevelBuffers[0] = acs.CreatePrimitiveBottomLevelAS(mpDevice, mpCmdList);
 
             AccelerationStructureBuffers topLevelBuffers = acs.CreateTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers, ref mTlasSize);
@@ -227,7 +228,7 @@ namespace SceneLambertian
             mShaderTableEntrySize = D3D12ShaderIdentifierSizeInBytes;
             mShaderTableEntrySize += 8; // the ray-gen's descriptor table
             mShaderTableEntrySize = align_to(D3D12RaytracingShaderRecordByteAlignment, mShaderTableEntrySize);
-            uint shaderTableSize = mShaderTableEntrySize * 5;
+            uint shaderTableSize = mShaderTableEntrySize * 8;
 
             // For simplicity, we create the shader.table on the upload heap. You can also create it on the default heap
             mpShaderTable = this.acs.CreateBuffer(mpDevice, shaderTableSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -250,7 +251,7 @@ namespace SceneLambertian
             pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kMissShader), D3D12ShaderIdentifierSizeInBytes);
 
-            // Entry 2-4 - hit program
+            // Entry 2-8 - hit program
             //heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;                
             for (int i = 0; i < 6; i++)
             {
@@ -281,7 +282,7 @@ namespace SceneLambertian
             resDesc.Width = mSwapChainRect.Width;
             mpOutputResource = mpDevice.CreateCommittedResource(AccelerationStructures.kDefaultHeapProps, HeapFlags.None, resDesc, ResourceStates.CopySource, null);  // Starting as copy-source to simplify onFrameRender()
 
-            // Create an SRV/UAV/VertexSRV/IndexSRV descriptor heap. Need 5 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer, 1 primitiveConstantBuffer
+            // Need 6 entries - 1 SRV for the scene, 1 UAV for the output, 1 SRV for VertexBuffer, 1 SRV for IndexBuffer, 1 SceneContantBuffer, 1 primitiveConstantBuffer, 1 random buffer
             mpSrvUavHeap = this.context.CreateDescriptorHeap(mpDevice, 5, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, true);
 
             // Create the UAV. Based on the root signature we created it should be the first entry
@@ -365,17 +366,47 @@ namespace SceneLambertian
 
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             sceneCBVHandle = srvHandle;
-            mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);           
+            mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);
+
+            // Random SRV
+            //int randomCount = 10; // mSwapChainRect.Width * mSwapChainRect.Height;
+            //float[] randomData = new float[randomCount];
+            //Random random = new Random();
+            //for (int i = 0; i < randomCount; i++)
+            //{
+            //    randomData[i] = (float)random.NextDouble();
+            //}
+
+            //ID3D12Resource randomBuffer = this.acs.CreateBuffer(mpDevice, (uint)(sizeof(float) * randomCount), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
+            //IntPtr pIB = randomBuffer.Map(0, null);
+            //Helpers.MemCpy(pIB, randomData, (uint)(sizeof(float) * randomData.Length));
+            //randomBuffer.Unmap(0, null);
+
+            //UnorderedAccessViewDescription randomUAVDesc = new UnorderedAccessViewDescription()
+            //{
+            //    ViewDimension = UnorderedAccessViewDimension.Buffer,
+            //    Format = Format.R32_Typeless,
+            //    Buffer = new BufferUnorderedAccessView()
+            //    {
+            //        Flags = BufferUnorderedAccessViewFlags.Raw,
+            //        FirstElement = 0,
+            //        NumElements = randomCount,
+            //    },
+            //};
+
+            //srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+            //randomSRVHandle = srvHandle;
+            //mpDevice.CreateUnorderedAccessView(randomBuffer, null, randomUAVDesc, randomSRVHandle);          
         }
-       
+
         public unsafe void CreateConstantBuffer()
         {
             int instances = 6;
             PrimitiveConstantBuffer[] primitiveConstantBuffer = new PrimitiveConstantBuffer[instances];
             primitiveConstantBuffer[0] = new PrimitiveConstantBuffer()
             {
-                diffuseColor = new Vector4(1.0f,1.0f,1.0f, 1.0f),
-                materialType = MaterialTypes.Lambertian,               
+                diffuseColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+                materialType = MaterialTypes.Lambertian,
             };
             primitiveConstantBuffer[1] = new PrimitiveConstantBuffer()
             {
@@ -386,13 +417,13 @@ namespace SceneLambertian
             {
                 diffuseColor = new Vector4(0.2f, 0.6f, 0.2f, 1.0f),
                 materialType = MaterialTypes.Metal,
-                fuzz = 1.0f
+                fuzz = 0.3f
             };
             primitiveConstantBuffer[3] = new PrimitiveConstantBuffer()
             {
                 diffuseColor = new Vector4(0.6f, 0.2f, 0.6f, 1.0f),
                 materialType = MaterialTypes.Metal,
-                fuzz = 0.3f,
+                fuzz = 0.0f,
             };
             primitiveConstantBuffer[4] = new PrimitiveConstantBuffer()
             {
@@ -415,7 +446,7 @@ namespace SceneLambertian
                 fixed (void* pSource = &primitiveConstantBuffer[i])
                 {
                     Unsafe.CopyBlock((void*)pData, pSource, bufferSize);
-                }                
+                }
                 this.primitivesCB[i].Unmap(0, null);
             }
         }
@@ -454,7 +485,7 @@ namespace SceneLambertian
             uint hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable.GPUVirtualAddress + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize*7;
 
             // Bind the empty root signature
             mpCmdList.SetComputeRootSignature(mpEmptyRootSig);

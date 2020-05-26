@@ -228,7 +228,7 @@ namespace RayTracingTutorial21
             mShaderTableEntrySize = D3D12ShaderIdentifierSizeInBytes;
             mShaderTableEntrySize += 8; // the ray-gen's descriptor table
             mShaderTableEntrySize = align_to(D3D12RaytracingShaderRecordByteAlignment, mShaderTableEntrySize);
-            uint shaderTableSize = mShaderTableEntrySize * 5;
+            uint shaderTableSize = mShaderTableEntrySize * 9;
 
             // For simplicity, we create the shader.table on the upload heap. You can also create it on the default heap
             mpShaderTable = this.acs.CreateBuffer(mpDevice, shaderTableSize, ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -256,7 +256,7 @@ namespace RayTracingTutorial21
             pData += (int)mShaderTableEntrySize; // +1 skips ray-gen
             Unsafe.CopyBlock((void*)pData, (void*)pRtsoProps.GetShaderIdentifier(RTPipeline.kShadowMiss), D3D12ShaderIdentifierSizeInBytes);
 
-            // Entry 3-5 - hit program
+            // Entry 3-9 - hit program
             //heapStart = (ulong)mpSrvUavHeap.GetGPUDescriptorHandleForHeapStart().Ptr;                
             for (int i = 0; i < 6; i++)
             {

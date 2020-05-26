@@ -6,6 +6,8 @@ RWTexture2D<float4> gOutput : register(u0);
 ByteAddressBuffer Indices : register(t1);
 StructuredBuffer<VertexPositionNormalTangentTexture> Vertices : register(t2);
 
+//RWBuffer<float> Random : register(u1);
+
 struct RayPayload
 {
 	float4 color;
@@ -64,6 +66,49 @@ float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttrib
 		attr.barycentrics.y * (vertexAttribute[2] - vertexAttribute[0]);
 }
 
+// Random utilities
+uint wang_hash(uint seed)
+{
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return seed;
+}
+
+float randFloat()
+{
+	uint3 index = DispatchRaysIndex();
+	return wang_hash(index.x * index.y) * (1.0 / 4294967296.0);
+}
+
+float RandomFloat(float min, float max)
+{
+	return randFloat() * (max - min) + min;
+	/*uint2 pixelCoords = DispatchRaysIndex().xy;
+	int index = pixelCoords.x * pixelCoords.y;
+	return Random[index] * (max - min) + min;*/
+}
+
+static const float PI = 3.14159265f;
+float3 RandomUnitVector()
+{
+	float a = RandomFloat(0, 2.0f * PI);
+	float z = RandomFloat(-1, 1);
+	float r = sqrt(1 - z * z);
+	return float3(r * cos(a), r * sin(a), z);
+}
+
+float3 Random_in_hemisphere(float3 normal)
+{
+	float3 in_unit_sphere = RandomUnitVector();
+	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+		return in_unit_sphere;
+	else
+		return -in_unit_sphere;
+}
+
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
@@ -105,7 +150,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		}
 		else
 		{
-			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + 0.0 * RandomUnitVector();
+			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * RandomUnitVector();
 		}
 		scatteredRay.TMin = 0.01;
 		scatteredRay.TMax = 100000;

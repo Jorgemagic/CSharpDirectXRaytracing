@@ -69,7 +69,9 @@ namespace SceneLambertian.RTX
                         // Vertices
                         new DescriptorRange(DescriptorRangeType.ShaderResourceView, 1, 2, 0, 3),     
                         // SceneCB
-                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),                        
+                        new DescriptorRange(DescriptorRangeType.ConstantBufferView, 1, 0, 0, 4),    
+                        // Random
+                        //new DescriptorRange(DescriptorRangeType.UnorderedAccessView, 1, 1, 0, 5),
                     }), ShaderVisibility.All),
                    new RootParameter(RootParameterType.ConstantBufferView, new RootDescriptor(1, 0), ShaderVisibility.All),
               });
