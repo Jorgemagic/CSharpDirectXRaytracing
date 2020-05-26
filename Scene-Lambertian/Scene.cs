@@ -43,6 +43,7 @@ namespace SceneLambertian
         private uint mShaderTableEntrySize;
 
         private ID3D12Resource sceneCB;
+        private SceneConstantBuffer sceneConstantBuffer;
         private ID3D12Resource[] primitivesCB;
 
         private long mTlasSize = 0;
@@ -350,7 +351,7 @@ namespace SceneLambertian
             Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
             Matrix4x4 viewProj = Matrix4x4.Multiply(view, proj);
             Matrix4x4.Invert(viewProj, out Matrix4x4 projectionToWorld);
-            SceneConstantBuffer sceneConstantBuffer = new SceneConstantBuffer()
+            sceneConstantBuffer = new SceneConstantBuffer()
             {
                 projectionToWorld = Matrix4x4.Transpose(projectionToWorld),
                 cameraPosition = cameraPosition,
@@ -376,7 +377,7 @@ namespace SceneLambertian
             srvHandle.Ptr += mpDevice.GetDescriptorHandleIncrementSize(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
             sceneCBVHandle = srvHandle;
             mpDevice.CreateConstantBufferView(sceneCBV, sceneCBVHandle);
-
+            
             // Random SRV
             //int randomCount = 10; // mSwapChainRect.Width * mSwapChainRect.Height;
             //float[] randomData = new float[randomCount];
@@ -473,6 +474,10 @@ namespace SceneLambertian
         {
             int rtvIndex = BeginFrame();
 
+            // Update constant buffers
+            this.sceneConstantBuffer.cameraPosition -= Vector3.UnitZ * 0.001f;
+            this.UpdateConstantBuffer(this.sceneCB, this.sceneConstantBuffer);
+
             // Let's raytrace
             context.ResourceBarrier(mpCmdList, mpOutputResource, ResourceStates.CopySource, ResourceStates.UnorderedAccess);
             DispatchRaysDescription raytraceDesc = new DispatchRaysDescription();
@@ -522,6 +527,13 @@ namespace SceneLambertian
             }
 
             return true;
+        }
+
+        private void UpdateConstantBuffer<T>(ID3D12Resource cb, T data) where T : struct
+        {
+            IntPtr pData = cb.Map(0, null);
+            Helpers.MemCpy(pData, data, (uint)Unsafe.SizeOf<T>());
+            cb.Unmap(0, null);
         }
 
         private void EndFrame(int rtvIndex)
