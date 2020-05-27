@@ -3,8 +3,9 @@
 	float4x4 projectionToWorld		: packoffset(c0);
 	float4 backgroundColor			: packoffset(c4);
 	float3 cameraPosition			: packoffset(c5);
-	float MaxRecursionDepth : packoffset(c5.w);
+	float MaxRecursionDepth			: packoffset(c5.w);
 	float3 lightPosition			: packoffset(c6);
+	int frameCount					: packoffset(c6.w);
 	float4 lightAmbientColor		: packoffset(c7);
 	float4 lightDiffuseColor		: packoffset(c8);
 };
@@ -13,7 +14,7 @@ cbuffer PrimitiveCB : register(b1)
 {
 	float4 diffuseColor		: packoffset(c0);
 	int materialType		: packoffset(c1.x);
-	float fuzz				: packoffset(c1.y);	
+	float fuzz				: packoffset(c1.y);
 }
 
 struct VertexPositionNormalTangentTexture
@@ -112,4 +113,16 @@ float3 CosineWeightedHemisphereSample(inout uint seed, float3 normal)
 	float phi = 2.0f * 3.14159265f * random.y;
 
 	return tangent * (r * cos(phi).x) + bitangent * (r * sin(phi)) + normal.xyz * sqrt(1 - random.x);
+}
+
+inline float3 RandomPointInUnitSphere(inout uint seed)
+{
+	float3 p = float3(2.0f, 2.0f, 2.0f);
+
+	while (length(p) > 1.0f)
+	{
+		p = float3(nextRand(seed) * 2.0f - 1.0f, nextRand(seed) * 2.0f - 1.0f, nextRand(seed) * 2.0f - 1.0f);
+	}
+
+	return p;
 }

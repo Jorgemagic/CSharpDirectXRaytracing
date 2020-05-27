@@ -21,6 +21,9 @@ namespace SceneLambertian.Structs
         [FieldOffset(96)]
         public Vector3 lightPosition;
 
+        [FieldOffset(108)]
+        public int FrameCount;
+
         [FieldOffset(112)]
         public Vector4 lightAmbientColor;
 

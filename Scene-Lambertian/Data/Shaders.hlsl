@@ -90,7 +90,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		return;
 	}
 
-	uint seed = initRand(DispatchRaysIndex().x, DispatchRaysIndex().y, 16);
+	uint seed = initRand(DispatchRaysIndex().x * frameCount, DispatchRaysIndex().y * frameCount, 16);
 
 	float3 hitPosition = HitWorldPosition();
 
@@ -124,7 +124,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 		}
 		else
 		{
-			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * CosineWeightedHemisphereSample(seed, hitNormal);
+			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * RandomPointInUnitSphere(seed);
 		}
 		scatteredRay.TMin = 0.01;
 		scatteredRay.TMax = 100000;

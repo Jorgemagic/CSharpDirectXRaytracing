@@ -44,6 +44,8 @@ namespace SceneLambertian
 
         private ID3D12Resource sceneCB;
         private SceneConstantBuffer sceneConstantBuffer;
+        private Matrix4x4 cameraProjection;
+        private float rotateAngle;
         private ID3D12Resource[] primitivesCB;
 
         private long mTlasSize = 0;
@@ -348,8 +350,8 @@ namespace SceneLambertian
             // CB Scene
             Vector3 cameraPosition = new Vector3(0, 1, -7);
             Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
-            Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
-            Matrix4x4 viewProj = Matrix4x4.Multiply(view, proj);
+            cameraProjection = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)mSwapChainRect.Width / mSwapChainRect.Height, 0.1f, 1000f);
+            Matrix4x4 viewProj = Matrix4x4.Multiply(view, cameraProjection);
             Matrix4x4.Invert(viewProj, out Matrix4x4 projectionToWorld);
             sceneConstantBuffer = new SceneConstantBuffer()
             {
@@ -360,6 +362,7 @@ namespace SceneLambertian
                 lightAmbientColor = new Vector4(0.1f, 0.1f, 0.1f, 1.0f),
                 backgroundColor = new Vector4(0.2f, 0.21f, 0.9f, 1.0f),
                 MaxRecursionDepth = 4,
+                FrameCount = 1,
             };
 
             sceneCB = this.acs.CreateBuffer(mpDevice, (uint)Unsafe.SizeOf<SceneConstantBuffer>(), ResourceFlags.None, ResourceStates.GenericRead, AccelerationStructures.kUploadHeapProps);
@@ -474,8 +477,15 @@ namespace SceneLambertian
         {
             int rtvIndex = BeginFrame();
 
-            // Update constant buffers
-            this.sceneConstantBuffer.cameraPosition -= Vector3.UnitZ * 0.001f;
+            // Update constant buffers            
+            rotateAngle = (rotateAngle + 0.01f) % (2 * (float)Math.PI);
+            Vector3 cameraPosition = new Vector3(7 * (float)Math.Sin(rotateAngle), 1, 7 * (float)Math.Cos(rotateAngle));
+            Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);            
+            Matrix4x4 viewProj = Matrix4x4.Multiply(view, cameraProjection);
+            Matrix4x4.Invert(viewProj, out Matrix4x4 projectionToWorld);
+            this.sceneConstantBuffer.cameraPosition = cameraPosition;
+            this.sceneConstantBuffer.projectionToWorld = Matrix4x4.Transpose(projectionToWorld);
+            this.sceneConstantBuffer.FrameCount++;
             this.UpdateConstantBuffer(this.sceneCB, this.sceneConstantBuffer);
 
             // Let's raytrace
