@@ -112,34 +112,31 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
 	float3 hitNormal = HitAttribute(vertexNormals, attribs);
 
-	float4 color;
-	if (payload.recursionDepth < MaxRecursionDepth)
+	float4 color = CalculatePhongLighting(diffuseColor, hitNormal, false);
+	RayDesc scatteredRay;
+	scatteredRay.Origin = hitPosition;
+	if (materialType == 0)
 	{
-		RayDesc scatteredRay;
-		scatteredRay.Origin = hitPosition;
-		if (materialType == 0)
-		{
-			//scatteredRay.Direction = hitPosition + Random_in_hemisphere(hitNormal);
-			scatteredRay.Direction = hitNormal + CosineWeightedHemisphereSample(seed, hitNormal);
-		}
-		else
-		{
-			scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * RandomPointInUnitSphere(seed);
-		}
-		scatteredRay.TMin = 0.001;
-		scatteredRay.TMax = 100000;
-		RayPayload scatteredPayload;
-		scatteredPayload.recursionDepth = payload.recursionDepth + 1;
-		TraceRay(gRtScene,
-			0  /*rayFlags*/,
-			0xFF,
-			0 /* ray index*/,
-			0 /* Multiplies */,
-			0 /* Miss index (raytrace) */,
-			scatteredRay,
-			scatteredPayload);
-		color = diffuseColor * scatteredPayload.color;
+		//scatteredRay.Direction = hitPosition + Random_in_hemisphere(hitNormal);
+		scatteredRay.Direction = hitNormal + CosineWeightedHemisphereSample(seed, hitNormal);
 	}
+	else
+	{
+		scatteredRay.Direction = reflect(normalize(WorldRayDirection()), hitNormal) + fuzz * RandomPointInUnitSphere(seed);
+	}
+	scatteredRay.TMin = 0.001;
+	scatteredRay.TMax = 100000;
+	RayPayload scatteredPayload;
+	scatteredPayload.recursionDepth = payload.recursionDepth + 1;
+	TraceRay(gRtScene,
+		0  /*rayFlags*/,
+		0xFF,
+		0 /* ray index*/,
+		0 /* Multiplies */,
+		0 /* Miss index (raytrace) */,
+		scatteredRay,
+		scatteredPayload);
+	color *= scatteredPayload.color;
 
 	payload.color = color;
 }
